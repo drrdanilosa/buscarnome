@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepAlias Hunter Pro - Ajuda</title>
+    <style>
+        :root {
+            --primary-color: #3a56e4;
+            --primary-dark: #2a46d4;
+            --secondary-color: #f5f7ff;
+            --text-color: #333;
+            --text-light: #666;
+            --border-color: #ddd;
+            --background-color: #fff;
+            --card-background: #f9f9f9;
+            --shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: var(--shadow);
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        h3 {
+            font-size: 16px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: var(--primary-dark);
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            margin-bottom: 15px;
+            margin-left: 20px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        .tip {
+            background-color: #e8f4fd;
+            border-left: 4px solid #2196f3;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+        }
+
+        .warning {
+            background-color: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+        }
+
+        .image-container {
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .caption {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--secondary-color);
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-light);
+            font-size: 12px;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .toc {
+            background-color: var(--secondary-color);
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .toc ul {
+            list-style-type: none;
+            margin-left: 0;
+        }
+
+        .toc li {
+            margin-bottom: 5px;
+        }
+
+        .toc a {
+            display: block;
+            padding: 3px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>DeepAlias Hunter Pro</h1>
+        <div>Manual do Usuário - Versão 4.0.0</div>
+    </header>
+
+    <div class="toc">
+        <h3>Índice</h3>
+        <ul>
+            <li><a href="#introducao">1. Introdução</a></li>
+            <li><a href="#instalacao">2. Instalação</a></li>
+            <li><a href="#primeiros-passos">3. Primeiros Passos</a></li>
+            <li><a href="#busca-avancada">4. Busca Avançada</a></li>
+            <li><a href="#configuracoes">5. Configurações</a></li>
+            <li><a href="#recursos-avancados">6. Recursos Avançados</a></li>
+            <li><a href="#faq">7. Perguntas Frequentes</a></li>
+            <li><a href="#solucao-problemas">8. Solução de Problemas</a></li>
+        </ul>
+    </div>
+
+    <div class="section" id="introducao">
+        <h2>1. Introdução</h2>
+        <p>DeepAlias Hunter Pro é uma extensão avançada para Firefox e Microsoft Edge que permite buscar usernames, nomes reais e termos específicos em diversas plataformas online, incluindo sites de conteúdo adulto, fóruns, redes sociais e deep web.</p>
+        
+        <p>Esta ferramenta foi projetada para ajudar pessoas a verificarem se seus dados pessoais ou imagens estão sendo utilizados de forma não autorizada, ilegal ou fraudulenta na internet, especialmente em um contexto onde a IA pode facilmente gerar conteúdo falso e identidades fictícias.</p>
+        
+        <h3>Principais Recursos</h3>
+        <ul>
+            <li>Busca em mais de 220 plataformas diferentes</li>
+            <li>Cobertura de sites adultos, fóruns especializados e deep web</li>
+            <li>Variações inteligentes de username para maior abrangência</li>
+            <li>Análise de risco e confiança dos resultados</li>
+            <li>Suporte a proxy e rotação de user-agent para evitar bloqueios</li>
+            <li>Integração com Tor para acesso à deep web</li>
+            <li>Análise de imagens para detecção de conteúdo sensível</li>
+            <li>Integração com serviços OSINT externos</li>
+            <li>Exportação de resultados em múltiplos formatos</li>
+        </ul>
+    </div>
+
+    <div class="section" id="instalacao">
+        <h2>2. Instalação</h2>
+        
+        <h3>Instalação no Firefox</h3>
+        <ol>
+            <li>Extraia o arquivo ZIP da extensão para uma pasta em seu computador</li>
+            <li>Abra o Firefox e digite <code>about:debugging</code> na barra de endereços</li>
+            <li>Clique em "Este Firefox" no menu lateral</li>
+            <li>Clique em "Carregar extensão temporária..."</li>
+            <li>Navegue até a pasta onde você extraiu a extensão e selecione o arquivo <code>manifest.json</code></li>
+            <li>A extensão será carregada e aparecerá na lista de extensões temporárias</li>
+        </ol>
+        
+        <div class="tip">
+            <p><strong>Dica:</strong> Para instalação permanente, você precisará empacotar a extensão e enviá-la para a Mozilla para revisão, ou usar o Firefox Developer Edition ou Nightly, que permitem a instalação permanente de extensões não assinadas.</p>
+        </div>
+        
+        <h3>Instalação no Microsoft Edge</h3>
+        <ol>
+            <li>Extraia o arquivo ZIP da extensão para uma pasta em seu computador</li>
+            <li>Abra o Edge e digite <code>edge://extensions</code> na barra de endereços</li>
+            <li>Ative o "Modo de desenvolvedor" no canto inferior esquerdo</li>
+            <li>Clique em "Carregar sem pacote"</li>
+            <li>Navegue até a pasta onde você extraiu a extensão e selecione-a</li>
+            <li>A extensão será carregada e aparecerá na lista de extensões</li>
+        </ol>
+        
+        <div class="warning">
+            <p><strong>Importante:</strong> Ao instalar a extensão no Edge, certifique-se de usar o arquivo <code>manifest_edge.json</code> renomeado para <code>manifest.json</code>, pois há pequenas diferenças na implementação entre os navegadores.</p>
+        </div>
+    </div>
+
+    <div class="section" id="primeiros-passos">
+        <h2>3. Primeiros Passos</h2>
+        
+        <h3>Interface Principal</h3>
+        <p>Após a instalação, você pode acessar a extensão clicando no ícone da DeepAlias Hunter Pro na barra de ferramentas do navegador. A interface principal contém:</p>
+        
+        <ul>
+            <li><strong>Campo de busca:</strong> Para inserir o username, nome ou termo a ser pesquisado</li>
+            <li><strong>Opções avançadas:</strong> Configurações específicas para a busca atual</li>
+            <li><strong>Área de resultados:</strong> Onde os resultados da busca serão exibidos</li>
+            <li><strong>Barra de status:</strong> Mostra o progresso da busca atual</li>
+            <li><strong>Opções de exportação:</strong> Para salvar os resultados em diferentes formatos</li>
+        </ul>
+        
+        <h3>Realizando Sua Primeira Busca</h3>
+        <ol>
+            <li>Clique no ícone da extensão para abrir o popup</li>
+            <li>Digite o username ou termo que deseja buscar no campo de texto</li>
+            <li>Clique no botão "Buscar" para iniciar a pesquisa</li>
+            <li>Aguarde enquanto a extensão verifica as diversas plataformas</li>
+            <li>Os resultados começarão a aparecer à medida que forem encontrados</li>
+            <li>Ao final da busca, você verá um resumo com o número de resultados encontrados</li>
+        </ol>
+        
+        <div class="tip">
+            <p><strong>Dica:</strong> Para buscas mais eficientes, use termos específicos e evite nomes muito comuns, que podem gerar muitos falsos positivos.</p>
+        </div>
+    </div>
+
+    <div class="section" id="busca-avancada">
+        <h2>4. Busca Avançada</h2>
+        
+        <h3>Opções Avançadas de Busca</h3>
+        <p>Para acessar as opções avançadas, clique em "Opções avançadas" abaixo do campo de busca. Isso revelará configurações adicionais:</p>
+        
+        <ul>
+            <li><strong>Incluir sites adultos:</strong> Ativa ou desativa a busca em plataformas de conteúdo adulto</li>
+            <li><strong>Incluir deep/dark web (Tor):</strong> Ativa a busca em sites .onion e deep web (requer configuração do Tor)</li>
+            <li><strong>Categorias prioritárias:</strong> Permite selecionar quais categorias de sites devem ser verificadas primeiro</li>
+            <li><strong>Máx. variações por plataforma:</strong> Define quantas variações do username serão testadas em cada plataforma</li>
+        </ul>
+        
+        <h3>Interpretando os Resultados</h3>
+        <p>Cada resultado encontrado contém as seguintes informações:</p>
+        
+        <ul>
+            <li><strong>Nome da plataforma:</strong> O site ou serviço onde o username foi encontrado</li>
+            <li><strong>URL:</strong> Link direto para o perfil ou página encontrada</li>
+            <li><strong>Pontuação de risco:</strong> Estimativa do nível de risco associado ao resultado (alto, médio, baixo)</li>
+            <li><strong>Confiança:</strong> Probabilidade de o resultado ser realmente relevante</li>
+            <li><strong>Variação:</strong> Qual variação do username foi encontrada</li>
+        </ul>
+        
+        <h3>Exportando Resultados</h3>
+        <p>Após concluir uma busca, você pode exportar os resultados em diferentes formatos:</p>
+        
+        <ul>
+            <li><strong>JSON:</strong> Formato estruturado para análise técnica ou importação em outras ferramentas</li>
+            <li><strong>CSV:</strong> Formato de planilha compatível com Excel, Google Sheets, etc.</li>
+            <li><strong>HTML:</strong> Relatório formatado para visualização em navegador</li>
+        </ul>
+        
+        <p>Para exportar, basta clicar no botão correspondente ao formato desejado na parte inferior da área de resultados.</p>
+    </div>
+
+    <div class="section" id="configuracoes">
+        <h2>5. Configurações</h2>
+        
+        <p>Para acessar as configurações completas da extensão, clique em "Configurações" no rodapé do popup. Isso abrirá uma página de configurações com várias seções:</p>
+        
+        <h3>Configurações Gerais</h3>
+        <ul>
+            <li><strong>Requisições Simultâneas:</strong> Controla quantas verificações são feitas em paralelo</li>
+            <li><strong>Tempo de Cache:</strong> Define por quanto tempo os resultados são armazenados</li>
+            <li><strong>Nível de Log:</strong> Controla a quantidade de informações de diagnóstico registradas</li>
+        </ul>
+        
+        <h3>Configurações de Busca</h3>
+        <ul>
+            <li><strong>Incluir sites adultos por padrão:</strong> Define o comportamento padrão para novas buscas</li>
+            <li><strong>Incluir deep/dark web por padrão:</strong> Define se buscas na deep web são ativadas automaticamente</li>
+            <li><strong>Categorias Prioritárias:</strong> Define quais categorias são verificadas primeiro</li>
+            <li><strong>Máx. variações por plataforma:</strong> Define o número padrão de variações</li>
+        </ul>
+        
+        <h3>Proxy e User-Agent</h3>
+        <ul>
+            <li><strong>Habilitar Rotação de Proxy:</strong> Ativa o uso de múltiplos proxies para evitar bloqueios</li>
+            <li><strong>Lista de Proxies:</strong> Permite adicionar servidores proxy para rotação</li>
+            <li><strong>Habilitar Rotação de User-Agent:</strong> Alterna entre diferentes identificações de navegador</li>
+        </ul>
+        
+        <h3>Conexão Tor</h3>
+        <ul>
+            <li><strong>Habilitar Conexão Tor:</strong> Ativa o acesso a sites .onion e deep web</li>
+            <li><strong>Proxy Tor:</strong> Configura o endereço do proxy SOCKS do Tor</li>
+            <li><strong>Testar Conexão:</strong> Verifica se a conexão com a rede Tor está funcionando</li>
+        </ul>
+        
+        <h3>Análise de Imagem</h3>
+        <ul>
+            <li><strong>Habilitar Análise de Imagem:</strong> Ativa a detecção de conteúdo sensível em imagens</li>
+            <li><strong>Provedor de API:</strong> Seleciona qual serviço usar para análise de imagens</li>
+            <li><strong>Chave de API:</strong> Configura a chave para o serviço selecionado</li>
+        </ul>
+        
+        <h3>Integração OSINT</h3>
+        <ul>
+            <li><strong>Habilitar Integração OSINT:</strong> Ativa a conexão com serviços externos de inteligência</li>
+            <li><strong>Chaves de API:</strong> Configura as chaves para serviços como Have I Been Pwned, DeHashed, etc.</li>
+        </ul>
+        
+        <div class="tip">
+            <p><strong>Dica:</strong> Após fazer alterações nas configurações, clique em "Salvar Configurações" para aplicá-las. Algumas alterações podem exigir que você reinicie a extensão.</p>
+        </div>
+    </div>
+
+    <div class="section" id="recursos-avancados">
+        <h2>6. Recursos Avançados</h2>
+        
+        <h3>Acesso à Deep Web via Tor</h3>
+        <p>Para acessar sites na deep web e dark web (.onion), você precisa:</p>
+        
+        <ol>
+            <li>Instalar o Tor Browser (disponível em <a href="https://www.torproject.org/" target="_blank" rel="noopener">torproject.org</a>)</li>
+            <li>Iniciar o Tor Browser para que o serviço SOCKS esteja disponível</li>
+            <li>Nas configurações da extensão, habilitar "Conexão Tor"</li>
+            <li>Verificar se o proxy está configurado corretamente (geralmente <code>socks5://127.0.0.1:9050</code>)</li>
+            <li>Testar a conexão usando o botão "Testar Conexão Tor"</li>
+            <li>Nas opções avançadas de busca, marcar "Incluir deep/dark web (Tor)"</li>
+        </ol>
+        
+        <div class="warning">
+            <p><strong>Atenção:</strong> O acesso à deep web e dark web pode expor você a conteúdo ilegal ou perturbador. Use com responsabilidade e apenas para fins legítimos de investigação.</p>
+        </div>
+        
+        <h3>Configuração de Proxy</h3>
+        <p>Para usar proxies e evitar bloqueios ou limites de taxa:</p>
+        
+        <ol>
+            <li>Nas configurações, habilite "Rotação de Proxy"</li>
+            <li>Adicione seus proxies na lista, um por linha, no formato <code>host:porta</code> ou <code>host:porta:usuario:senha</code></li>
+            <li>A extensão alternará automaticamente entre os proxies durante as buscas</li>
+        </ol>
+        
+        <h3>Análise de Imagem</h3>
+        <p>Para detectar conteúdo sensível em imagens encontradas:</p>
+        
+        <ol>
+            <li>Nas configurações, habilite "Análise de Imagem"</li>
+            <li>Selecione um provedor de API (Sightengine recomendado)</li>
+            <li>Configure sua chave de API para o serviço selecionado</li>
+            <li>Durante as buscas, a extensão analisará automaticamente imagens encontradas</li>
+        </ol>
+        
+        <p>A análise de imagem pode detectar:</p>
+        <ul>
+            <li>Nudez e conteúdo adulto</li>
+            <li>Violência ou conteúdo perturbador</li>
+            <li>Presença de rostos (para identificar se suas fotos estão sendo usadas)</li>
+        </ul>
+        
+        <h3>Integração com Serviços OSINT</h3>
+        <p>Para verificar vazamentos de dados e presença em bases de dados comprometidas:</p>
+        
+        <ol>
+            <li>Nas configurações, habilite "Integração OSINT"</li>
+            <li>Configure as chaves de API para os serviços desejados</li>
+            <li>Durante as buscas, a extensão consultará automaticamente esses serviços</li>
+        </ol>
+        
+        <p>Serviços suportados incluem:</p>
+        <ul>
+            <li>Have I Been Pwned - Verifica vazamentos de e-mails</li>
+            <li>DeHashed - Busca credenciais vazadas</li>
+            <li>Intelligence X - Busca em bases de dados de inteligência</li>
+        </ul>
+    </div>
+
+    <div class="section" id="faq">
+        <h2>7. Perguntas Frequentes</h2>
+        
+        <h3>Quais navegadores são suportados?</h3>
+        <p>A extensão é compatível com Firefox (prioridade) e Microsoft Edge. Outros navegadores baseados em Chromium podem funcionar, mas não são oficialmente suportados.</p>
+        
+        <h3>A extensão armazena ou envia meus dados para algum servidor?</h3>
+        <p>Não. A extensão funciona inteiramente no seu navegador e não envia dados para servidores externos, exceto quando você usa recursos específicos que requerem APIs externas (como análise de imagem ou integração OSINT).</p>
+        
+        <h3>Como posso saber se os resultados são precisos?</h3>
+        <p>Cada resultado inclui uma pontuação de confiança que indica a probabilidade de ser um resultado verdadeiro. Resultados com alta confiança são mais prováveis de serem relevantes. Sempre verifique manualmente os resultados importantes.</p>
+        
+        <h3>Por que preciso do Tor Browser para acessar a deep web?</h3>
+        <p>O Tor Browser fornece o serviço SOCKS necessário para rotear tráfego através da rede Tor, permitindo acesso a sites .onion e outros recursos da deep web. A extensão usa esse serviço para fazer as requisições.</p>
+        
+        <h3>A extensão pode remover conteúdo não autorizado que encontrar?</h3>
+        <p>Não. A extensão apenas identifica onde seu username, nome ou imagens podem estar sendo usados. Para remover conteúdo não autorizado, você precisará entrar em contato com os administradores do site ou tomar medidas legais apropriadas.</p>
+        
+        <h3>Como obter chaves de API para os serviços externos?</h3>
+        <p>Você precisará se registrar nos respectivos serviços:</p>
+        <ul>
+            <li>Have I Been Pwned: <a href="https://haveibeenpwned.com/API/Key" target="_blank" rel="noopener">haveibeenpwned.com/API/Key</a></li>
+            <li>Sightengine: <a href="https://sightengine.com/pricing" target="_blank" rel="noopener">sightengine.com/pricing</a></li>
+            <li>DeHashed: <a href="https://dehashed.com/pricing" target="_blank" rel="noopener">dehashed.com/pricing</a></li>
+        </ul>
+        
+        <h3>A extensão é gratuita?</h3>
+        <p>A extensão em si é gratuita, mas alguns recursos avançados (como análise de imagem e integração OSINT) podem requerer chaves de API de serviços externos que podem ter custos associados.</p>
+    </div>
+
+    <div class="section" id="solucao-problemas">
+        <h2>8. Solução de Problemas</h2>
+        
+        <h3>A extensão não está encontrando resultados</h3>
+        <ul>
+            <li>Verifique sua conexão com a internet</li>
+            <li>Tente aumentar o número de variações por plataforma</li>
+            <li>Verifique se você não está sendo bloqueado por muitas requisições (considere usar proxies)</li>
+            <li>Tente termos de busca mais específicos</li>
+        </ul>
+        
+        <h3>A conexão com Tor não funciona</h3>
+        <ul>
+            <li>Certifique-se de que o Tor Browser está instalado e em execução</li>
+            <li>Verifique se o endereço do proxy está correto (geralmente <code>socks5://127.0.0.1:9050</code>)</li>
+            <li>Reinicie o Tor Browser e tente novamente</li>
+            <li>Verifique se seu firewall não está bloqueando a conexão</li>
+        </ul>
+        
+        <h3>A extensão está lenta</h3>
+        <ul>
+            <li>Reduza o número de plataformas verificadas usando categorias prioritárias</li>
+            <li>Diminua o número de variações por plataforma</li>
+            <li>Aumente o número de requisições simultâneas (se seu computador e conexão suportarem)</li>
+            <li>Verifique se o cache está habilitado para evitar verificações repetidas</li>
+        </ul>
+        
+        <h3>Erros de API em serviços externos</h3>
+        <ul>
+            <li>Verifique se suas chaves de API estão corretas e válidas</li>
+            <li>Confirme se você não excedeu os limites de uso da API</li>
+            <li>Tente desabilitar temporariamente o serviço específico que está causando erros</li>
+        </ul>
+        
+        <h3>A extensão desaparece após reiniciar o navegador</h3>
+        <ul>
+            <li>No Firefox, extensões carregadas temporariamente são removidas ao reiniciar. Você precisará carregá-la novamente ou criar uma versão assinada</li>
+            <li>No Edge, verifique se o modo de desenvolvedor ainda está ativado</li>
+        </ul>
+        
+        <div class="tip">
+            <p><strong>Dica para desenvolvedores:</strong> Se encontrar problemas técnicos, verifique o console do navegador (F12 > Console) para mensagens de erro detalhadas que podem ajudar a diagnosticar o problema.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>DeepAlias Hunter Pro v4.0.0 - Manual do Usuário</p>
+        <p>© 2025 - Todos os direitos reservados</p>
+    </footer>
+</body>
+</html>

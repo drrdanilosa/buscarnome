@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦊 Teste Final Firefox - DeepAlias Hunter Pro</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        .success { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+        .error { background: rgba(255, 77, 77, 0.2); color: #ff4d4d; }
+        .warning { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+        .info { background: rgba(54, 162, 235, 0.2); color: #36a2eb; }
+        button {
+            background: linear-gradient(45deg, #00ff88, #00d4aa);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 10px 5px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background: #00ff88; }
+        .status-offline { background: #ff4d4d; }
+        .status-warning { background: #ffc107; }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🦊 Teste Final Firefox</h1>
+            <h2>DeepAlias Hunter Pro</h2>
+            <p>Validação completa da extensão no Mozilla Firefox</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Status da Extensão</h3>
+            <div id="extensionStatus">
+                <div class="test-result info">Verificando se a extensão está carregada...</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🌐 Testes de API</h3>
+            <button onclick="testBrowserAPI()">Testar API do Navegador</button>
+            <button onclick="testCommunication()">Testar Comunicação</button>
+            <button onclick="testFetchInterception()">Testar Interceptação Fetch</button>
+            <div id="apiResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔄 Teste de Funcionalidade</h3>
+            <button onclick="testSearchFunction()">Testar Busca</button>
+            <button onclick="testPlatformCount()">Verificar Plataformas</button>
+            <div id="functionalityResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Relatório Final</h3>
+            <button onclick="generateFinalReport()">Gerar Relatório Completo</button>
+            <div id="finalReport"></div>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Configuração segura para Firefox
+        const browserAPI = (() => {
+            if (typeof browser !== 'undefined' && browser.runtime) {
+                console.log('🦊 Firefox API detectada');
+                return browser;
+            } else if (typeof chrome !== 'undefined' && chrome.runtime) {
+                console.log('🔧 Chrome API detectada (compatibilidade)');
+                return chrome;
+            } else {
+                console.log('❌ Nenhuma API de extensão detectada');
+                return {
+                    runtime: {
+                        sendMessage: () => Promise.reject(new Error('Extensão não carregada')),
+                        lastError: null
+                    }
+                };
+            }
+        })();
+
+        // Função para exibir resultados
+        function displayResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.textContent = message;
+            container.appendChild(resultDiv);
+        }
+
+        // Verificar status da extensão
+        function checkExtensionStatus() {
+            const statusContainer = document.getElementById('extensionStatus');
+            statusContainer.innerHTML = '';
+
+            try {
+                if (browserAPI.runtime && browserAPI.runtime.id) {
+                    displayResult('extensionStatus', '✅ Extensão carregada e ativa', 'success');
+                    displayResult('extensionStatus', `📦 ID da Extensão: ${browserAPI.runtime.id}`, 'info');
+                    
+                    // Verificar manifest
+                    if (browserAPI.runtime.getManifest) {
+                        const manifest = browserAPI.runtime.getManifest();
+                        displayResult('extensionStatus', `📋 Nome: ${manifest.name}`, 'info');
+                        displayResult('extensionStatus', `🔢 Versão: ${manifest.version}`, 'info');
+                        displayResult('extensionStatus', `📊 Manifest: v${manifest.manifest_version}`, 'info');
+                    }
+                } else {
+                    displayResult('extensionStatus', '❌ Extensão não detectada', 'error');
+                    displayResult('extensionStatus', '💡 Certifique-se de que a extensão está instalada e ativa', 'warning');
+                }
+            } catch (error) {
+                displayResult('extensionStatus', `❌ Erro: ${error.message}`, 'error');
+            }
+        }
+
+        // Testar API do navegador
+        async function testBrowserAPI() {
+            const container = document.getElementById('apiResults');
+            container.innerHTML = '';
+
+            displayResult('apiResults', '🔍 Testando APIs do Firefox...', 'info');
+
+            // Teste 1: Verificar browser vs chrome
+            if (typeof browser !== 'undefined') {
+                displayResult('apiResults', '✅ API browser (Firefox) disponível', 'success');
+            } else {
+                displayResult('apiResults', '❌ API browser (Firefox) não encontrada', 'error');
+            }
+
+            if (typeof chrome !== 'undefined') {
+                displayResult('apiResults', '⚠️ API chrome detectada (modo compatibilidade)', 'warning');
+            } else {
+                displayResult('apiResults', '✅ API chrome não presente (Firefox puro)', 'success');
+            }
+
+            // Teste 2: Runtime
+            try {
+                if (browserAPI.runtime) {
+                    displayResult('apiResults', '✅ Runtime API funcional', 'success');
+                } else {
+                    displayResult('apiResults', '❌ Runtime API não encontrada', 'error');
+                }
+            } catch (error) {
+                displayResult('apiResults', `❌ Erro no Runtime: ${error.message}`, 'error');
+            }
+        }
+
+        // Testar comunicação
+        async function testCommunication() {
+            const container = document.getElementById('apiResults');
+            
+            displayResult('apiResults', '📨 Testando comunicação com background...', 'info');
+
+            try {
+                const response = await browserAPI.runtime.sendMessage({
+                    action: 'ping',
+                    source: 'firefox_test'
+                });
+
+                if (response) {
+                    displayResult('apiResults', '✅ Comunicação funcionando', 'success');
+                    displayResult('apiResults', `📥 Resposta: ${JSON.stringify(response)}`, 'info');
+                } else {
+                    displayResult('apiResults', '⚠️ Sem resposta do background script', 'warning');
+                }
+            } catch (error) {
+                displayResult('apiResults', `❌ Erro na comunicação: ${error.message}`, 'error');
+            }
+        }
+
+        // Testar interceptação do fetch
+        function testFetchInterception() {
+            const container = document.getElementById('apiResults');
+            
+            displayResult('apiResults', '🔄 Testando interceptação do fetch...', 'info');
+
+            // Verificar se fetch foi modificado
+            const descriptor = Object.getOwnPropertyDescriptor(window, 'fetch');
+            
+            if (descriptor && descriptor.configurable) {
+                displayResult('apiResults', '✅ Fetch é modificável', 'success');
+            } else {
+                displayResult('apiResults', '⚠️ Fetch pode estar protegido', 'warning');
+            }
+
+            // Teste prático
+            try {
+                fetch('data:text/plain,test')
+                    .then(() => {
+                        displayResult('apiResults', '✅ Fetch funcional', 'success');
+                    })
+                    .catch(error => {
+                        displayResult('apiResults', `❌ Erro no fetch: ${error.message}`, 'error');
+                    });
+            } catch (error) {
+                displayResult('apiResults', `❌ Erro ao testar fetch: ${error.message}`, 'error');
+            }
+        }
+
+        // Testar função de busca
+        async function testSearchFunction() {
+            const container = document.getElementById('functionalityResults');
+            container.innerHTML = '';
+
+            displayResult('functionalityResults', '🔍 Testando função de busca...', 'info');
+
+            try {
+                const response = await browserAPI.runtime.sendMessage({
+                    action: 'startSearch',
+                    username: 'test_user_firefox',
+                    settings: {
+                        selectedPlatforms: ['github', 'twitter'],
+                        searchDepth: 'basic'
+                    }
+                });
+
+                if (response && response.success) {
+                    displayResult('functionalityResults', '✅ Busca iniciada com sucesso', 'success');
+                } else {
+                    displayResult('functionalityResults', `⚠️ Resposta inesperada: ${JSON.stringify(response)}`, 'warning');
+                }
+            } catch (error) {
+                displayResult('functionalityResults', `❌ Erro na busca: ${error.message}`, 'error');
+            }
+        }
+
+        // Verificar contagem de plataformas
+        async function testPlatformCount() {
+            const container = document.getElementById('functionalityResults');
+            
+            displayResult('functionalityResults', '🌐 Verificando plataformas disponíveis...', 'info');
+
+            try {
+                const response = await browserAPI.runtime.sendMessage({
+                    action: 'getPlatforms'
+                });
+
+                if (response && response.platforms) {
+                    const count = response.platforms.length;
+                    if (count > 0) {
+                        displayResult('functionalityResults', `✅ ${count} plataformas carregadas`, 'success');
+                        displayResult('functionalityResults', `📋 Exemplos: ${response.platforms.slice(0, 5).map(p => p.name || p).join(', ')}`, 'info');
+                    } else {
+                        displayResult('functionalityResults', '❌ Nenhuma plataforma encontrada', 'error');
+                    }
+                } else {
+                    displayResult('functionalityResults', '⚠️ Resposta inválida para plataformas', 'warning');
+                }
+            } catch (error) {
+                displayResult('functionalityResults', `❌ Erro ao verificar plataformas: ${error.message}`, 'error');
+            }
+        }
+
+        // Gerar relatório final
+        async function generateFinalReport() {
+            const container = document.getElementById('finalReport');
+            container.innerHTML = '';
+
+            displayResult('finalReport', '📊 Gerando relatório final...', 'info');
+
+            const report = {
+                timestamp: new Date().toLocaleString('pt-BR'),
+                browser: 'Mozilla Firefox',
+                tests: []
+            };
+
+            // Coletar resultados de todos os testes
+            try {
+                // Teste 1: API disponível
+                const apiAvailable = browserAPI.runtime && browserAPI.runtime.id;
+                report.tests.push({
+                    name: 'API da Extensão',
+                    status: apiAvailable ? 'PASS' : 'FAIL',
+                    details: apiAvailable ? 'API funcionando' : 'API não detectada'
+                });
+
+                // Teste 2: Comunicação
+                try {
+                    const commResponse = await browserAPI.runtime.sendMessage({ action: 'ping' });
+                    report.tests.push({
+                        name: 'Comunicação Background',
+                        status: commResponse ? 'PASS' : 'FAIL',
+                        details: commResponse ? 'Comunicação OK' : 'Sem resposta'
+                    });
+                } catch (error) {
+                    report.tests.push({
+                        name: 'Comunicação Background',
+                        status: 'FAIL',
+                        details: error.message
+                    });
+                }
+
+                // Teste 3: Plataformas
+                try {
+                    const platformResponse = await browserAPI.runtime.sendMessage({ action: 'getPlatforms' });
+                    const platformCount = platformResponse?.platforms?.length || 0;
+                    report.tests.push({
+                        name: 'Carregamento de Plataformas',
+                        status: platformCount > 0 ? 'PASS' : 'FAIL',
+                        details: `${platformCount} plataformas encontradas`
+                    });
+                } catch (error) {
+                    report.tests.push({
+                        name: 'Carregamento de Plataformas',
+                        status: 'FAIL',
+                        details: error.message
+                    });
+                }
+
+                // Exibir relatório
+                displayResult('finalReport', '📋 RELATÓRIO FINAL', 'info');
+                displayResult('finalReport', `🕒 Data/Hora: ${report.timestamp}`, 'info');
+                displayResult('finalReport', `🦊 Navegador: ${report.browser}`, 'info');
+                
+                let passCount = 0;
+                let totalTests = report.tests.length;
+
+                report.tests.forEach(test => {
+                    const status = test.status === 'PASS' ? '✅' : '❌';
+                    const type = test.status === 'PASS' ? 'success' : 'error';
+                    if (test.status === 'PASS') passCount++;
+                    
+                    displayResult('finalReport', `${status} ${test.name}: ${test.details}`, type);
+                });
+
+                // Resumo final
+                const successRate = Math.round((passCount / totalTests) * 100);
+                const summaryType = successRate >= 80 ? 'success' : successRate >= 60 ? 'warning' : 'error';
+                
+                displayResult('finalReport', `🎯 RESUMO: ${passCount}/${totalTests} testes aprovados (${successRate}%)`, summaryType);
+                
+                if (successRate >= 80) {
+                    displayResult('finalReport', '🎉 EXTENSÃO FUNCIONANDO CORRETAMENTE NO FIREFOX!', 'success');
+                } else {
+                    displayResult('finalReport', '⚠️ Alguns problemas detectados - verifique os erros acima', 'warning');
+                }
+
+            } catch (error) {
+                displayResult('finalReport', `❌ Erro ao gerar relatório: ${error.message}`, 'error');
+            }
+        }
+
+        // Executar verificações iniciais quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            checkExtensionStatus();
+        });
+    </script>
+</body>
+</html>

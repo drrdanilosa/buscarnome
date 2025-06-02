@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Validação da Correção Firefox - DeepAlias Hunter Pro</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            line-height: 1.6;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .test-section h3 {
+            color: #ffeb3b;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 10px 10px 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .result {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .success {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        
+        .warning {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        
+        .info {
+            color: #2196f3;
+            font-weight: bold;
+        }
+        
+        .critical {
+            background: rgba(244, 67, 54, 0.2);
+            border: 2px solid #f44336;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-ok { background-color: #4caf50; }
+        .status-error { background-color: #f44336; }
+        .status-warning { background-color: #ff9800; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Validação da Correção Firefox</h1>
+        <p style="text-align: center; font-size: 1.1em; margin-bottom: 30px;">
+            <strong>Teste específico para validar a correção do listener de mensagens no Firefox</strong>
+        </p>
+        
+        <div class="test-section">
+            <h3>🔍 1. Verificação da API do Browser</h3>
+            <button onclick="testBrowserAPI()">Testar API do Browser</button>
+            <div id="browserResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📨 2. Teste de Comunicação Background ↔ Popup</h3>
+            <button onclick="testBackgroundCommunication()">Testar Comunicação</button>
+            <button onclick="testSearchFunction()">Testar Função de Busca</button>
+            <div id="communicationResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔧 3. Validação da Correção Específica</h3>
+            <button onclick="validateFix()">Validar Correção do Listener</button>
+            <div id="fixValidationResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🚀 4. Teste Completo da Extensão</h3>
+            <button onclick="fullExtensionTest()">Teste Completo</button>
+            <div id="fullTestResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Verificar se estamos rodando dentro da extensão
+        function getBrowserAPI() {
+            if (typeof browser !== 'undefined') {
+                return { api: browser, type: 'Firefox (browser API)' };
+            } else if (typeof chrome !== 'undefined') {
+                return { api: chrome, type: 'Chrome/Edge (chrome API)' };
+            } else {
+                return { api: null, type: 'Nenhuma API detectada - Execute dentro da extensão' };
+            }
+        }
+
+        async function testBrowserAPI() {
+            const result = document.getElementById('browserResult');
+            result.innerHTML = '<div class="loading"></div>Verificando API do browser...';
+            
+            const browserInfo = getBrowserAPI();
+            
+            if (browserInfo.api) {
+                result.innerHTML = `
+                    <div class="success">
+                        ✅ <strong>API Detectada:</strong> ${browserInfo.type}<br>
+                        ✅ <strong>Runtime disponível:</strong> ${!!browserInfo.api.runtime}<br>
+                        ✅ <strong>Messaging disponível:</strong> ${!!browserInfo.api.runtime?.sendMessage}<br>
+                        ✅ <strong>Extension ID:</strong> ${browserInfo.api.runtime?.id || 'N/A'}
+                    </div>
+                `;
+            } else {
+                result.innerHTML = `
+                    <div class="error">
+                        ❌ <strong>Erro:</strong> ${browserInfo.type}<br>
+                        💡 <strong>Solução:</strong> Execute este teste dentro da extensão carregada no Firefox
+                    </div>
+                `;
+            }
+        }
+
+        async function testBackgroundCommunication() {
+            const result = document.getElementById('communicationResult');
+            result.innerHTML = '<div class="loading"></div>Testando comunicação com background...';
+            
+            const browserInfo = getBrowserAPI();
+            
+            if (!browserInfo.api || !browserInfo.api.runtime) {
+                result.innerHTML = `
+                    <div class="error">
+                        ❌ <strong>Erro:</strong> API não disponível<br>
+                        💡 Execute dentro da extensão carregada
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                console.log('🔄 Enviando mensagem de teste para o background...');
+                
+                // Teste básico de ping
+                const pingResponse = await browserInfo.api.runtime.sendMessage({
+                    type: 'ping',
+                    data: { timestamp: Date.now() }
+                });
+
+                console.log('📨 Resposta do ping:', pingResponse);
+
+                // Teste de verificação de serviços
+                const serviceResponse = await browserInfo.api.runtime.sendMessage({
+                    type: 'checkServices',
+                    data: {}
+                });
+
+                console.log('🔧 Resposta dos serviços:', serviceResponse);
+
+                if (pingResponse && serviceResponse) {
+                    result.innerHTML = `
+                        <div class="success">
+                            ✅ <strong>Comunicação Estabelecida!</strong><br>
+                            📨 <strong>Ping Response:</strong> ${JSON.stringify(pingResponse, null, 2)}<br><br>
+                            🔧 <strong>Services Response:</strong> ${JSON.stringify(serviceResponse, null, 2)}
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="error">
+                            ❌ <strong>Comunicação Falhou</strong><br>
+                            📨 Ping: ${pingResponse ? '✅' : '❌'}<br>
+                            🔧 Services: ${serviceResponse ? '✅' : '❌'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('❌ Erro na comunicação:', error);
+                result.innerHTML = `
+                    <div class="error">
+                        ❌ <strong>Erro de Comunicação:</strong><br>
+                        ${error.message}<br><br>
+                        <strong>Stack:</strong><br>
+                        ${error.stack}
+                    </div>
+                `;
+            }
+        }
+
+        async function testSearchFunction() {
+            const result = document.getElementById('communicationResult');
+            result.innerHTML = '<div class="loading"></div>Testando função de busca específica...';
+            
+            const browserInfo = getBrowserAPI();
+            
+            if (!browserInfo.api || !browserInfo.api.runtime) {
+                result.innerHTML = `<div class="error">❌ API não disponível</div>`;
+                return;
+            }
+
+            try {
+                console.log('🔍 Testando busca por "testuser"...');
+                
+                const searchResponse = await browserInfo.api.runtime.sendMessage({
+                    type: 'search',
+                    data: {
+                        username: 'testuser',
+                        options: {
+                            includeAdult: false,
+                            maxPlatforms: 5
+                        }
+                    }
+                });
+
+                console.log('🔍 Resposta da busca:', searchResponse);
+
+                if (searchResponse && searchResponse.success) {
+                    const { results } = searchResponse;
+                    result.innerHTML = `
+                        <div class="success">
+                            ✅ <strong>BUSCA FUNCIONANDO!</strong><br>
+                            🔍 <strong>Search ID:</strong> ${searchResponse.searchId}<br>
+                            📊 <strong>Plataformas Verificadas:</strong> ${results.platformsChecked}<br>
+                            📈 <strong>Total de Plataformas:</strong> ${results.platformsTotal}<br>
+                            🎯 <strong>Resultados Encontrados:</strong> ${results.results.length}<br>
+                            ⏱️ <strong>Status:</strong> ${results.status}<br><br>
+                            <strong>Detalhes:</strong><br>
+                            ${JSON.stringify(results, null, 2)}
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="error">
+                            ❌ <strong>BUSCA FALHOU!</strong><br>
+                            📋 <strong>Resposta:</strong> ${JSON.stringify(searchResponse, null, 2)}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('❌ Erro na busca:', error);
+                result.innerHTML = `
+                    <div class="error">
+                        ❌ <strong>Erro na Busca:</strong><br>
+                        ${error.message}<br><br>
+                        <strong>Stack:</strong><br>
+                        ${error.stack}
+                    </div>
+                `;
+            }
+        }
+
+        async function validateFix() {
+            const result = document.getElementById('fixValidationResult');
+            result.innerHTML = '<div class="loading"></div>Validando correção específica...';
+            
+            const browserInfo = getBrowserAPI();
+            
+            if (!browserInfo.api) {
+                result.innerHTML = `<div class="error">❌ API não disponível para validação</div>`;
+                return;
+            }
+
+            try {
+                // Detectar se é Firefox
+                const isFirefox = typeof browser !== 'undefined';
+                
+                result.innerHTML = `
+                    <div class="info">
+                        🔧 <strong>Validação da Correção do Listener</strong><br><br>
+                        🌐 <strong>Navegador Detectado:</strong> ${isFirefox ? 'Firefox' : 'Chrome/Edge'}<br>
+                        📨 <strong>API Utilizada:</strong> ${isFirefox ? 'browser (Promise-based)' : 'chrome (callback-based)'}<br>
+                        🔧 <strong>Listener Esperado:</strong> ${isFirefox ? 'Promise return' : 'sendResponse callback'}<br><br>
+                        
+                        ${isFirefox ? 
+                            '<div class="success">✅ Firefox detectado - usando correção Promise-based</div>' : 
+                            '<div class="warning">⚠️ Chrome/Edge detectado - usando callback-based</div>'
+                        }
+                    </div>
+                `;
+                
+                // Teste específico para validar o tipo de resposta
+                setTimeout(async () => {
+                    try {
+                        const testMessage = {
+                            type: 'getStatus',
+                            data: {}
+                        };
+                        
+                        const response = await browserInfo.api.runtime.sendMessage(testMessage);
+                        
+                        result.innerHTML += `
+                            <br><div class="success">
+                                ✅ <strong>CORREÇÃO VALIDADA!</strong><br>
+                                📨 Mensagem enviada e resposta recebida corretamente<br>
+                                🔧 Tipo de resposta: ${typeof response}<br>
+                                📋 Resposta: ${JSON.stringify(response, null, 2)}
+                            </div>
+                        `;
+                    } catch (error) {
+                        result.innerHTML += `
+                            <br><div class="error">
+                                ❌ <strong>CORREÇÃO FALHOU!</strong><br>
+                                Erro: ${error.message}
+                            </div>
+                        `;
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="error">
+                        ❌ <strong>Erro na Validação:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function fullExtensionTest() {
+            const result = document.getElementById('fullTestResult');
+            result.innerHTML = '<div class="loading"></div>Executando teste completo da extensão...';
+            
+            const browserInfo = getBrowserAPI();
+            
+            if (!browserInfo.api) {
+                result.innerHTML = `<div class="error">❌ Execute dentro da extensão</div>`;
+                return;
+            }
+
+            let testResults = [];
+            
+            try {
+                // Teste 1: Ping
+                result.innerHTML = '<div class="loading"></div>Teste 1/4: Ping...';
+                const pingTest = await browserInfo.api.runtime.sendMessage({ type: 'ping' });
+                testResults.push({ test: 'Ping', success: !!pingTest, result: pingTest });
+                
+                // Teste 2: Check Services
+                result.innerHTML = '<div class="loading"></div>Teste 2/4: Verificação de Serviços...';
+                const servicesTest = await browserInfo.api.runtime.sendMessage({ type: 'checkServices' });
+                testResults.push({ test: 'Services', success: !!servicesTest, result: servicesTest });
+                
+                // Teste 3: Busca Real
+                result.innerHTML = '<div class="loading"></div>Teste 3/4: Busca Real...';
+                const searchTest = await browserInfo.api.runtime.sendMessage({
+                    type: 'search',
+                    data: { username: 'test_validation', options: { maxPlatforms: 3 } }
+                });
+                testResults.push({ test: 'Search', success: !!searchTest?.success, result: searchTest });
+                
+                // Teste 4: Status
+                result.innerHTML = '<div class="loading"></div>Teste 4/4: Status...';
+                const statusTest = await browserInfo.api.runtime.sendMessage({ type: 'getStatus' });
+                testResults.push({ test: 'Status', success: !!statusTest, result: statusTest });
+                
+                // Exibir resultados finais
+                const successCount = testResults.filter(t => t.success).length;
+                const isAllSuccess = successCount === testResults.length;
+                
+                result.innerHTML = `
+                    <div class="${isAllSuccess ? 'success' : 'warning'}">
+                        <h4>${isAllSuccess ? '🎉 TODOS OS TESTES PASSARAM!' : '⚠️ ALGUNS TESTES FALHARAM'}</h4>
+                        <strong>Resultado: ${successCount}/${testResults.length} testes passaram</strong><br><br>
+                        
+                        ${testResults.map(test => `
+                            <div>
+                                <span class="status-indicator ${test.success ? 'status-ok' : 'status-error'}"></span>
+                                <strong>${test.test}:</strong> ${test.success ? '✅ Passou' : '❌ Falhou'}<br>
+                                <pre style="margin-left: 20px; font-size: 0.9em;">${JSON.stringify(test.result, null, 2)}</pre>
+                            </div>
+                        `).join('<br>')}
+                        
+                        ${isAllSuccess ? 
+                            '<br><div class="critical" style="background: rgba(76, 175, 80, 0.2); border-color: #4caf50;"><strong>🎯 CORREÇÃO APLICADA COM SUCESSO!</strong><br>A extensão está funcionando corretamente no Firefox.</div>' :
+                            '<br><div class="critical"><strong>❌ AINDA HÁ PROBLEMAS</strong><br>Alguns testes falharam. Verifique os logs do console para mais detalhes.</div>'
+                        }
+                    </div>
+                `;
+                
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="error">
+                        ❌ <strong>Erro no Teste Completo:</strong><br>
+                        ${error.message}<br><br>
+                        <strong>Resultados Parciais:</strong><br>
+                        ${testResults.map(test => `${test.test}: ${test.success ? '✅' : '❌'}`).join('<br>')}
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-executar teste inicial quando a página carregar
+        window.addEventListener('load', () => {
+            setTimeout(testBrowserAPI, 500);
+        });
+    </script>
+</body>
+</html>

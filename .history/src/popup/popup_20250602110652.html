@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepAlias Hunter Pro</title>
+    <link rel="stylesheet" href="../assets/css/popup.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>DeepAlias Hunter Pro</h1>
+            <div class="version">v4.0.0</div>
+        </header>
+
+        <div class="search-container">
+            <form id="search-form">
+                <div class="input-group">
+                    <input type="text" id="username-input" placeholder="Digite um username, nome ou termo para buscar..." required>
+                    <button type="submit" id="search-button">Buscar</button>
+                </div>
+                <div class="options-toggle">
+                    <a href="#" id="toggle-options">Opções avançadas</a>
+                </div>
+                <div class="advanced-options" id="advanced-options">
+                    <div class="option-group">
+                        <label>
+                            <input type="checkbox" id="include-adult" checked>
+                            Incluir sites adultos
+                        </label>
+                    </div>
+                    <div class="option-group">
+                        <label>
+                            <input type="checkbox" id="include-tor">
+                            Incluir deep/dark web (Tor)
+                        </label>
+                    </div>
+                    <div class="option-group">
+                        <label>Categorias prioritárias:</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="priority-category" value="adult"> Adulto</label>
+                            <label><input type="checkbox" name="priority-category" value="social"> Social</label>
+                            <label><input type="checkbox" name="priority-category" value="forum"> Fóruns</label>
+                            <label><input type="checkbox" name="priority-category" value="images"> Imagens</label>
+                            <label><input type="checkbox" name="priority-category" value="linkinbio"> Link-in-bio</label>
+                        </div>
+                    </div>
+                    <div class="option-group">
+                        <label>
+                            <span>Máx. variações por plataforma:</span>
+                            <select id="max-variations">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3" selected>3</option>
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="results-container" id="results-container">
+            <div class="status-bar" id="status-bar">
+                <div class="progress-bar">
+                    <div class="progress" id="progress-bar" style="width: 0%"></div>
+                </div>
+                <div class="status-text" id="status-text">Pronto para buscar</div>
+                <button id="cancel-button" class="cancel-button" style="display: none;">Cancelar</button>
+            </div>
+
+            <div class="results-summary" id="results-summary" style="display: none;">
+                <div class="summary-item">
+                    <span class="label">Encontrados:</span>
+                    <span class="value" id="found-count">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Alto risco:</span>
+                    <span class="value" id="high-risk-count">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Plataformas verificadas:</span>
+                    <span class="value" id="platforms-count">0</span>
+                </div>
+            </div>
+
+            <div class="results-list" id="results-list"></div>
+
+            <div class="no-results" id="no-results" style="display: none;">
+                <p>Nenhum resultado encontrado para este username.</p>
+            </div>
+
+            <div class="export-options" id="export-options" style="display: none;">
+                <button id="export-json" class="export-button">Exportar JSON</button>
+                <button id="export-csv" class="export-button">Exportar CSV</button>
+                <button id="export-html" class="export-button">Exportar HTML</button>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-links">
+                <a href="#" id="open-settings">Configurações</a>
+                <a href="#" id="open-help">Ajuda</a>
+                <a href="#" id="open-about">Sobre</a>
+                <a href="#" id="diagnostico-firefox" style="color: #ff6b6b;">🦊 Diagnóstico Firefox</a>
+            </div>
+        </footer>
+    </div>
+
+    <script type="module" src="../assets/js/popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico: Plataformas Verificadas: 0</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            color: #856404;
+        }
+        
+        .button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        #results {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 25px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #17a2b8; font-weight: bold; }
+        .warning-text { color: #ffc107; font-weight: bold; }
+        
+        .steps {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .step {
+            margin: 10px 0;
+            padding: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico: Plataformas Verificadas: 0</h1>
+        
+        <div class="warning">
+            <strong>⚠️ IMPORTANTE:</strong> Este diagnóstico específico irá identificar exatamente onde está o problema que causa "Plataformas verificadas: 0" na extensão DeepAlias Hunter Pro.
+        </div>
+        
+        <div class="steps">
+            <h3>📋 Pré-requisitos:</h3>
+            <div class="step">1. ✅ A extensão deve estar carregada no Firefox (about:addons)</div>
+            <div class="step">2. ✅ O background script deve estar ativo</div>
+            <div class="step">3. ✅ Abra o DevTools (F12) para ver os logs detalhados</div>
+            <div class="step">4. ✅ Se necessário, vá em about:debugging → Este Firefox → Inspect (na extensão)</div>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <button id="runDiagnostic" class="button">🚀 Executar Diagnóstico Completo</button>
+            <button id="testPing" class="button">📡 Teste de Ping</button>
+            <button id="testServices" class="button">🔧 Verificar Serviços</button>
+            <button id="testSearch" class="button">🔍 Busca de Teste</button>
+            <button id="clearResults" class="button">🗑️ Limpar Resultados</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>    <script>
+        // Polyfill para compatibilidade Firefox/Edge com verificação de segurança
+        const browserAPI = (() => {
+            if (typeof browser !== 'undefined' && browser.runtime) {
+                return browser; // Firefox
+            } else if (typeof chrome !== 'undefined' && chrome.runtime) {
+                return chrome; // Chrome/Edge
+            } else {
+                // Contexto fora da extensão - simular API básica
+                return {
+                    runtime: {
+                        sendMessage: () => Promise.reject(new Error('Extensão não disponível - execute dentro do contexto da extensão')),
+                        lastError: null
+                    }
+                };
+            }
+        })();
+        
+        const results = document.getElementById('results');
+        const runDiagnosticBtn = document.getElementById('runDiagnostic');
+        const testPingBtn = document.getElementById('testPing');
+        const testServicesBtn = document.getElementById('testServices');
+        const testSearchBtn = document.getElementById('testSearch');
+        const clearResultsBtn = document.getElementById('clearResults');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'error' ? 'error' : 
+                              type === 'success' ? 'success' : 
+                              type === 'warning' ? 'warning-text' : 'info';
+            
+            results.innerHTML += `<span class="${colorClass}">[${timestamp}] ${message}</span>\n`;
+            results.scrollTop = results.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        async function testPing() {
+            log('🔄 Testando comunicação básica com background script...', 'info');
+            
+            if (!browserAPI || !browserAPI.runtime) {
+                log('❌ ERRO CRÍTICO: API do browser não disponível!', 'error');
+                log('💡 Solução: Verifique se a extensão está carregada corretamente', 'warning');
+                return false;
+            }
+            
+            try {
+                const response = await new Promise((resolve, reject) => {
+                    browserAPI.runtime.sendMessage({
+                        type: 'ping',
+                        data: { test: true, timestamp: Date.now() }
+                    }, (response) => {
+                        if (browserAPI.runtime.lastError) {
+                            reject(new Error(browserAPI.runtime.lastError.message));
+                        } else {
+                            resolve(response);
+                        }
+                    });
+                    
+                    setTimeout(() => reject(new Error('Timeout após 5 segundos')), 5000);
+                });
+                
+                if (response && response.success) {
+                    log('✅ Comunicação com background script: OK', 'success');
+                    log(`📊 Resposta: ${JSON.stringify(response, null, 2)}`, 'info');
+                    return true;
+                } else {
+                    log('❌ Background script respondeu mas com erro', 'error');
+                    log(`📊 Resposta: ${JSON.stringify(response, null, 2)}`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ ERRO no ping: ${error.message}`, 'error');
+                log('💡 Isso indica que o background script não está respondendo', 'warning');
+                return false;
+            }
+        }
+        
+        async function testServices() {
+            log('🔄 Verificando status dos serviços internos...', 'info');
+            
+            try {
+                const response = await new Promise((resolve, reject) => {
+                    browserAPI.runtime.sendMessage({
+                        type: 'checkServices'
+                    }, (response) => {
+                        if (browserAPI.runtime.lastError) {
+                            reject(new Error(browserAPI.runtime.lastError.message));
+                        } else {
+                            resolve(response);
+                        }
+                    });
+                    
+                    setTimeout(() => reject(new Error('Timeout após 5 segundos')), 5000);
+                });
+                
+                if (response && response.success) {
+                    log('✅ Verificação de serviços: OK', 'success');
+                    
+                    const services = response.services;
+                    log('📊 ANÁLISE DETALHADA DOS SERVIÇOS:', 'info');
+                    log(`- Platform Service: ${services.platformService?.available ? '✅ Ativo' : '❌ Inativo'}`, services.platformService?.available ? 'success' : 'error');
+                    log(`- Plataformas carregadas: ${services.platformService?.platforms || 0}`, services.platformService?.platforms > 0 ? 'success' : 'error');
+                    log(`- Search Engine: ${services.searchEngine?.available ? '✅ Ativo' : '❌ Inativo'}`, services.searchEngine?.available ? 'success' : 'error');
+                    log(`- Username Variator: ${services.usernameVariator?.available ? '✅ Ativo' : '❌ Inativo'}`, services.usernameVariator?.available ? 'success' : 'error');
+                    log(`- Platform Checker: ${services.platformChecker?.available ? '✅ Ativo' : '❌ Inativo'}`, services.platformChecker?.available ? 'success' : 'error');
+                    
+                    if (services.platformService?.platforms === 0) {
+                        log('🚨 PROBLEMA IDENTIFICADO: PlatformService retorna 0 plataformas!', 'error');
+                        log('💡 Isso é a causa do "Plataformas verificadas: 0"', 'warning');
+                        log('🔧 Verificar: SimplePlatformService.getAllPlatforms()', 'warning');
+                    } else if (services.platformService?.platforms > 0) {
+                        log(`🎯 Platform Service tem ${services.platformService.platforms} plataformas`, 'success');
+                        log(`📝 Exemplos: ${services.platformService.platformNames?.join(', ') || 'N/A'}`, 'info');
+                    }
+                    
+                    return true;
+                } else {
+                    log('❌ Verificação de serviços falhou', 'error');
+                    log(`📊 Resposta: ${JSON.stringify(response, null, 2)}`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ ERRO ao verificar serviços: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function testSearch() {
+            log('🔄 Executando busca de teste para identificar problema...', 'info');
+            
+            try {
+                const response = await new Promise((resolve, reject) => {
+                    browserAPI.runtime.sendMessage({
+                        type: 'search',
+                        data: {
+                            username: 'test_diagnostic_user',
+                            options: {
+                                includeAdult: false,
+                                maxVariations: 2,
+                                maxPlatforms: 5
+                            }
+                        }
+                    }, (response) => {
+                        if (browserAPI.runtime.lastError) {
+                            reject(new Error(browserAPI.runtime.lastError.message));
+                        } else {
+                            resolve(response);
+                        }
+                    });
+                    
+                    setTimeout(() => reject(new Error('Timeout após 15 segundos')), 15000);
+                });
+                
+                if (response && response.success) {
+                    log('✅ Busca de teste iniciada com sucesso', 'success');
+                    log(`🆔 Search ID: ${response.searchId}`, 'info');
+                    
+                    const results = response.results;
+                    log(`📊 Status: ${results?.status || 'N/A'}`, 'info');
+                    log(`🎯 Plataformas totais: ${results?.platformsTotal || 0}`, results?.platformsTotal > 0 ? 'success' : 'error');
+                    log(`🔍 Plataformas verificadas: ${results?.platformsChecked || 0}`, 'info');
+                    log(`🎪 Resultados encontrados: ${results?.results?.length || 0}`, 'info');
+                    
+                    if (results?.platformsTotal === 0) {
+                        log('🚨 CONFIRMADO: O problema está no SearchEngine.search()', 'error');
+                        log('💡 SimplePlatformService.getAllPlatforms() retorna array vazio', 'warning');
+                        log('🔧 Verificar: linha ~187 em background_simple.js', 'warning');
+                    } else {
+                        log('🎉 SearchEngine conseguiu carregar plataformas corretamente!', 'success');
+                        log('💡 O problema pode estar em outro lugar', 'warning');
+                    }
+                    
+                    return true;
+                } else {
+                    log('❌ Busca de teste falhou', 'error');
+                    log(`📊 Resposta: ${JSON.stringify(response, null, 2)}`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ ERRO na busca de teste: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function runFullDiagnostic() {
+            log('🚀 === INICIANDO DIAGNÓSTICO COMPLETO ===', 'info');
+            log('🎯 Objetivo: Identificar causa do "Plataformas verificadas: 0"', 'info');
+            log('', 'info');
+            
+            runDiagnosticBtn.disabled = true;
+            
+            // Teste 1: Ping
+            log('🔄 ETAPA 1: Testando comunicação básica...', 'info');
+            const pingOk = await testPing();
+            if (!pingOk) {
+                log('🛑 Diagnóstico interrompido: Falha na comunicação básica', 'error');
+                runDiagnosticBtn.disabled = false;
+                return;
+            }
+            log('', 'info');
+            
+            // Teste 2: Serviços
+            log('🔄 ETAPA 2: Verificando serviços...', 'info');
+            const servicesOk = await testServices();
+            if (!servicesOk) {
+                log('🛑 Diagnóstico interrompido: Falha na verificação de serviços', 'error');
+                runDiagnosticBtn.disabled = false;
+                return;
+            }
+            log('', 'info');
+            
+            // Teste 3: Busca
+            log('🔄 ETAPA 3: Testando busca real...', 'info');
+            const searchOk = await testSearch();
+            log('', 'info');
+            
+            // Conclusão
+            log('📋 === RELATÓRIO FINAL ===', 'info');
+            log(`✅ Comunicação: ${pingOk ? 'OK' : 'FALHOU'}`, pingOk ? 'success' : 'error');
+            log(`✅ Serviços: ${servicesOk ? 'OK' : 'FALHOU'}`, servicesOk ? 'success' : 'error');
+            log(`✅ Busca: ${searchOk ? 'OK' : 'FALHOU'}`, searchOk ? 'success' : 'error');
+            log('', 'info');
+            
+            if (pingOk && servicesOk && searchOk) {
+                log('🎉 TODOS OS TESTES PASSARAM!', 'success');
+                log('💡 O problema pode estar na interface do popup ou timing', 'warning');
+            } else {
+                log('🚨 PROBLEMAS IDENTIFICADOS', 'error');
+                log('📋 Verifique os logs acima para detalhes específicos', 'warning');
+            }
+            
+            runDiagnosticBtn.disabled = false;
+        }
+        
+        // Event Listeners
+        runDiagnosticBtn.addEventListener('click', runFullDiagnostic);
+        testPingBtn.addEventListener('click', testPing);
+        testServicesBtn.addEventListener('click', testServices);
+        testSearchBtn.addEventListener('click', testSearch);
+        clearResultsBtn.addEventListener('click', () => {
+            results.innerHTML = '';
+            log('🧹 Resultados limpos', 'info');
+        });
+        
+        // Verificação inicial
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🔥 Diagnóstico específico para "Plataformas verificadas: 0" carregado', 'success');
+            log('💡 Use os botões acima para identificar o problema exato', 'info');
+            log('', 'info');
+            
+            if (!browserAPI) {
+                log('⚠️ AVISO: API do browser não detectada automaticamente', 'warning');
+                log('📋 Verifique se a extensão está carregada no Firefox', 'warning');
+            }
+        });
+    </script>
+</body>
+</html>

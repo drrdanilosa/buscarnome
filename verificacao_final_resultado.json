@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-06-02T14:58:24.383Z",
+  "score": 100,
+  "verificacoes": {
+    "total": 27,
+    "passaram": 27,
+    "falharam": 0
+  },
+  "status": "APROVADO",
+  "erros": []
+}

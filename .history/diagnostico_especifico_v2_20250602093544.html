@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico DeepAlias Hunter Pro - Modo Compatível</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        
+        .status-extension { background: #d4edda; color: #155724; }
+        .status-standalone { background: #fff3cd; color: #856404; }
+        .status-error { background: #f8d7da; color: #721c24; }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            color: #856404;
+        }
+        
+        .button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .button-secondary {
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+        
+        .button-warning {
+            background: linear-gradient(45deg, #ffc107, #fd7e14);
+        }
+        
+        .button-danger {
+            background: linear-gradient(45deg, #dc3545, #e83e8c);
+        }
+        
+        #results {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 25px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #dee2e6;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 3px 0;
+            border-left: 3px solid transparent;
+            padding-left: 10px;
+        }
+        
+        .log-entry.success {
+            color: #28a745;
+            border-left-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+        
+        .log-entry.error {
+            color: #dc3545;
+            border-left-color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+        }
+        
+        .log-entry.warning {
+            color: #ffc107;
+            border-left-color: #ffc107;
+            background: rgba(255, 193, 7, 0.1);
+        }
+        
+        .log-entry.info {
+            color: #17a2b8;
+            border-left-color: #17a2b8;
+            background: rgba(23, 162, 184, 0.1);
+        }
+        
+        .timestamp {
+            color: #6c757d;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        
+        .steps {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .step {
+            margin: 10px 0;
+            padding: 5px 0;
+        }
+        
+        .execution-mode {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico DeepAlias Hunter Pro</h1>
+        
+        <div id="executionMode" class="execution-mode">
+            <div id="modeStatus"></div>
+        </div>
+        
+        <div class="warning">
+            <strong>🎯 PROBLEMA INVESTIGADO:</strong> Extensão registra "Plataformas verificadas: 0" durante busca.
+            <br><strong>✅ CORREÇÃO APLICADA:</strong> Erro de sintaxe em background_simple.js foi corrigido.
+        </div>
+        
+        <div class="steps">
+            <h3>📋 Status da Correção:</h3>
+            <div class="step">✅ Código duplicado removido das linhas 61-64</div>
+            <div class="step">✅ SimplePlatformService agora deve inicializar corretamente</div>
+            <div class="step">✅ SearchEngine deve encontrar 20+ plataformas</div>
+            <div class="step">🔄 Pendente: Validação final da correção</div>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <button id="runDiagnostic" class="button">🚀 Diagnóstico Completo</button>
+            <button id="testPing" class="button button-secondary">📡 Teste Comunicação</button>
+            <button id="testServices" class="button button-warning">🔧 Verificar Serviços</button>
+            <button id="testSearch" class="button button-danger">🔍 Teste de Busca</button>
+            <button id="clearResults" class="button">🗑️ Limpar</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Verificar contexto de execução
+        const isExtensionContext = typeof chrome !== 'undefined' || typeof browser !== 'undefined';
+        const browserAPI = isExtensionContext ? (typeof browser !== 'undefined' ? browser : chrome) : null;
+        
+        const results = document.getElementById('results');
+        const modeStatus = document.getElementById('modeStatus');
+        const executionMode = document.getElementById('executionMode');
+        
+        // Elementos dos botões
+        const runDiagnosticBtn = document.getElementById('runDiagnostic');
+        const testPingBtn = document.getElementById('testPing');
+        const testServicesBtn = document.getElementById('testServices');
+        const testSearchBtn = document.getElementById('testSearch');
+        const clearResultsBtn = document.getElementById('clearResults');
+        
+        function updateExecutionMode() {
+            if (isExtensionContext) {
+                modeStatus.innerHTML = '<span class="status-badge status-extension">🔌 MODO EXTENSÃO</span><br>Todas as funcionalidades disponíveis';
+                executionMode.style.background = '#d4edda';
+            } else {
+                modeStatus.innerHTML = '<span class="status-badge status-standalone">🌐 MODO STANDALONE</span><br>Simulações e testes de conectividade disponíveis';
+                executionMode.style.background = '#fff3cd';
+            }
+        }
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.createElement('div');
+            logDiv.className = `log-entry ${type}`;
+            logDiv.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+            results.appendChild(logDiv);
+            results.scrollTop = results.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function clearLogs() {
+            results.innerHTML = '';
+        }
+
+        // Diagnóstico Principal
+        async function runDiagnostic() {
+            log('🔍 INICIANDO DIAGNÓSTICO DEEPALIAS HUNTER PRO v2.0', 'info');
+            log('🎯 Investigando: "Plataformas verificadas: 0"', 'warning');
+            log('', 'info');
+            
+            if (!isExtensionContext) {
+                log('⚠️ Executando em modo STANDALONE', 'warning');
+                log('🔧 Para diagnóstico completo, execute através da extensão Firefox', 'info');
+                await simulateDiagnostic();
+                return;
+            }
+
+            runDiagnosticBtn.disabled = true;
+            
+            try {
+                log('📋 Verificando comunicação com background script...', 'info');
+                
+                // Teste de comunicação básica
+                const pingResponse = await new Promise((resolve, reject) => {
+                    browserAPI.runtime.sendMessage({ action: 'ping' }, (response) => {
+                        if (browserAPI.runtime.lastError) {
+                            reject(new Error(browserAPI.runtime.lastError.message));
+                        } else {
+                            resolve(response);
+                        }
+                    });
+                    setTimeout(() => reject(new Error('Timeout')), 5000);
+                });
+
+                if (pingResponse) {
+                    log('✅ Comunicação com background: OK', 'success');
+                } else {
+                    log('❌ Background script não respondeu', 'error');
+                    return;
+                }
+
+                // Verificar contagem de plataformas
+                log('📊 Verificando contagem de plataformas...', 'info');
+                const platformResponse = await new Promise((resolve, reject) => {
+                    browserAPI.runtime.sendMessage({ 
+                        action: 'getPlatformCount' 
+                    }, (response) => {
+                        if (browserAPI.runtime.lastError) {
+                            reject(new Error(browserAPI.runtime.lastError.message));
+                        } else {
+                            resolve(response);
+                        }
+                    });
+                    setTimeout(() => reject(new Error('Timeout')), 5000);
+                });
+
+                if (platformResponse && platformResponse.count !== undefined) {
+                    log(`📈 Plataformas carregadas: ${platformResponse.count}`, 
+                        platformResponse.count > 0 ? 'success' : 'error');
+                    
+                    if (platformResponse.count === 0) {
+                        log('🚨 PROBLEMA CONFIRMADO: Plataformas = 0', 'error');
+                        log('🔧 A correção de sintaxe pode não ter sido aplicada corretamente', 'warning');
+                        log('💡 Recomendação: Recarregue a extensão (about:debugging)', 'info');
+                    } else {
+                        log('🎉 PROBLEMA RESOLVIDO! Plataformas carregadas com sucesso', 'success');
+                        log(`📋 Plataformas disponíveis: ${platformResponse.platforms?.slice(0,5).join(', ')}...`, 'info');
+                    }
+                } else {
+                    log('❌ Erro ao obter contagem de plataformas', 'error');
+                }
+
+            } catch (error) {
+                log(`❌ Erro no diagnóstico: ${error.message}`, 'error');
+                log('💡 Verifique se a extensão está ativa e recarregada', 'warning');
+            } finally {
+                runDiagnosticBtn.disabled = false;
+            }
+        }
+
+        async function simulateDiagnostic() {
+            log('🎭 Executando diagnóstico simulado...', 'info');
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            log('📊 ANÁLISE DO PROBLEMA (baseada na correção aplicada):', 'info');
+            log('', 'info');
+            log('🔍 PROBLEMA IDENTIFICADO:', 'warning');
+            log('   └─ background_simple.js linhas 61-64 continham código duplicado', 'error');
+            log('   └─ Erro quebrava inicialização do SimplePlatformService', 'error');
+            log('   └─ Resultado: getAllPlatforms() retornava array vazio', 'error');
+            log('', 'info');
+            
+            log('✅ CORREÇÃO APLICADA:', 'success');
+            log('   └─ Código duplicado removido com sucesso', 'success');
+            log('   └─ SimplePlatformService deve funcionar normalmente', 'success');
+            log('', 'info');
+            
+            log('📋 Plataformas que deveriam estar disponíveis:', 'info');
+            const expectedPlatforms = [
+                'GitHub', 'Twitter/X', 'Instagram', 'LinkedIn', 'TikTok',
+                'YouTube', 'Reddit', 'Discord', 'Telegram', 'Twitch',
+                'Pinterest', 'Snapchat', 'WhatsApp', 'Facebook', 'Steam',
+                'PlayStation', 'Xbox', 'Spotify', 'SoundCloud', 'Behance'
+            ];
+            
+            for (let i = 0; i < expectedPlatforms.length; i++) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+                log(`   ✓ ${expectedPlatforms[i]}`, 'success');
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            log('', 'info');
+            log(`📈 Total esperado: ${expectedPlatforms.length} plataformas`, 'success');
+            log('🎯 RECOMENDAÇÃO: Recarregue a extensão para aplicar correções', 'warning');
+            log('🔄 Execute este diagnóstico através da extensão para validação final', 'info');
+        }
+
+        // Teste de Ping
+        async function testPing() {
+            log('🏓 TESTANDO CONECTIVIDADE EXTERNA', 'info');
+            
+            const testUrls = [
+                { url: 'https://httpbin.org/get', name: 'HTTPBin' },
+                { url: 'https://api.github.com', name: 'GitHub API' },
+                { url: 'https://jsonplaceholder.typicode.com/posts/1', name: 'JSONPlaceholder' }
+            ];
+
+            for (const test of testUrls) {
+                try {
+                    log(`📡 Testando: ${test.name}...`, 'info');
+                    const response = await fetch(test.url);
+                    if (response.ok) {
+                        log(`✅ ${test.name} - Status: ${response.status} OK`, 'success');
+                    } else {
+                        log(`⚠️ ${test.name} - Status: ${response.status}`, 'warning');
+                    }
+                } catch (error) {
+                    log(`❌ ${test.name} - Erro: ${error.message}`, 'error');
+                }
+            }
+            
+            log('📊 Teste de conectividade concluído', 'info');
+        }
+
+        // Teste dos Serviços
+        async function testServices() {
+            log('🔧 TESTANDO SERVIÇOS INTERNOS', 'info');
+            
+            if (!isExtensionContext) {
+                log('⚠️ APIs de extensão não disponíveis em modo standalone', 'warning');
+                await simulateServices();
+                return;
+            }
+
+            try {
+                // Testar storage
+                log('💾 Testando storage local...', 'info');
+                const testData = { test: `test_${Date.now()}`, timestamp: new Date().toISOString() };
+                await browserAPI.storage.local.set(testData);
+                const result = await browserAPI.storage.local.get('test');
+                
+                if (result.test) {
+                    log(`✅ Storage funcionando: ${result.test}`, 'success');
+                } else {
+                    log('❌ Storage não funcionou corretamente', 'error');
+                }
+
+                // Testar runtime
+                log('⚙️ Testando runtime da extensão...', 'info');
+                const manifest = browserAPI.runtime.getManifest();
+                log(`✅ Runtime OK - ${manifest.name} v${manifest.version}`, 'success');
+                log(`📋 Manifest version: ${manifest.manifest_version}`, 'info');
+
+            } catch (error) {
+                log(`❌ Erro nos serviços: ${error.message}`, 'error');
+            }
+        }
+
+        async function simulateServices() {
+            log('🎭 Simulando teste de serviços...', 'info');
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const services = [
+                'SimpleStorageService',
+                'SimplePlatformService', 
+                'SearchEngine',
+                'UsernameVariator',
+                'PlatformChecker'
+            ];
+            
+            for (const service of services) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+                log(`✅ ${service}: OK (simulado)`, 'success');
+            }
+            
+            log('💡 Para teste real dos serviços, execute através da extensão', 'info');
+        }
+
+        // Teste de Busca
+        async function testSearch() {
+            log('🔍 TESTANDO BUSCA DE ALIASES', 'info');
+            
+            const testAlias = 'testuser_diagnostic';
+            log(`🎯 Buscando alias: "${testAlias}"`, 'info');
+            
+            if (!isExtensionContext) {
+                await simulateSearch(testAlias);
+                return;
+            }
+
+            try {
+                const response = await new Promise((resolve, reject) => {
+                    browserAPI.runtime.sendMessage({
+                        action: 'search',
+                        alias: testAlias,
+                        options: { maxPlatforms: 5 }
+                    }, (response) => {
+                        if (browserAPI.runtime.lastError) {
+                            reject(new Error(browserAPI.runtime.lastError.message));
+                        } else {
+                            resolve(response);
+                        }
+                    });
+                    setTimeout(() => reject(new Error('Timeout')), 10000);
+                });
+
+                if (response && response.success) {
+                    log(`✅ Busca iniciada com sucesso`, 'success');
+                    log(`📊 Plataformas verificadas: ${response.platformsChecked || 0}`, 
+                        response.platformsChecked > 0 ? 'success' : 'error');
+                    log(`🔍 Resultados: ${response.results?.length || 0}`, 'info');
+                    
+                    if (response.platformsChecked === 0) {
+                        log('🚨 PROBLEMA AINDA PRESENTE: Plataformas verificadas = 0', 'error');
+                        log('🔄 A extensão precisa ser recarregada para aplicar a correção', 'warning');
+                    }
+                } else {
+                    log('❌ Busca falhou', 'error');
+                }
+
+            } catch (error) {
+                log(`❌ Erro na busca: ${error.message}`, 'error');
+            }
+        }
+
+        async function simulateSearch(alias) {
+            log('🎭 Simulando busca (modo standalone)...', 'info');
+            
+            const mockPlatforms = [
+                { name: 'GitHub', url: 'github.com' },
+                { name: 'Twitter/X', url: 'twitter.com' },
+                { name: 'Instagram', url: 'instagram.com' },
+                { name: 'LinkedIn', url: 'linkedin.com' },
+                { name: 'TikTok', url: 'tiktok.com' },
+                { name: 'YouTube', url: 'youtube.com' },
+                { name: 'Reddit', url: 'reddit.com' }
+            ];
+
+            log(`📋 Simulando verificação em ${mockPlatforms.length} plataformas...`, 'info');
+            
+            for (let i = 0; i < mockPlatforms.length; i++) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                const platform = mockPlatforms[i];
+                const found = Math.random() > 0.75; // 25% chance de encontrar
+                
+                if (found) {
+                    log(`✅ ${platform.name}: Usuário encontrado!`, 'success');
+                } else {
+                    log(`❌ ${platform.name}: Usuário não encontrado`, 'info');
+                }
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            log('🏁 Busca simulada concluída', 'success');
+            log(`📊 Plataformas verificadas: ${mockPlatforms.length} (simulado)`, 'success');
+        }
+
+        // Event Listeners
+        runDiagnosticBtn.addEventListener('click', runDiagnostic);
+        testPingBtn.addEventListener('click', testPing);
+        testServicesBtn.addEventListener('click', testServices);
+        testSearchBtn.addEventListener('click', testSearch);
+        clearResultsBtn.addEventListener('click', clearLogs);
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            updateExecutionMode();
+            
+            log('🚀 Ferramenta de Diagnóstico DeepAlias Hunter Pro v2.0', 'info');
+            log('🎯 Problema investigado: "Plataformas verificadas: 0"', 'warning');
+            log('✅ Correção aplicada: Erro de sintaxe removido', 'success');
+            log('', 'info');
+            
+            if (isExtensionContext) {
+                log('🔌 Executando em contexto de EXTENSÃO', 'success');
+                log('🔧 Diagnóstico completo disponível', 'info');
+            } else {
+                log('🌐 Executando em modo STANDALONE', 'warning');
+                log('📊 Simulações e análise de correção disponíveis', 'info');
+                log('💡 Para validação final, execute através da extensão Firefox', 'info');
+            }
+        });
+    </script>
+</body>
+</html>
