@@ -1,113 +1,158 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeepAlias Hunter Pro</title>
-    <link rel="stylesheet" href="../assets/css/popup.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=420, initial-scale=1.0, user-scalable=no">
+  <meta name="author" content="drrdanilosa">
+  <meta name="version" content="5.0.0">
+  <meta name="updated" content="2025-06-04 04:26:08">
+  <title>DeepAlias Hunter Pro</title>
+  <link rel="stylesheet" href="../assets/css/popup.css">
+  <style>
+    /* Estilos inline para garantir dimensões */
+    html, body {
+      width: 420px !important;
+      min-width: 420px !important;
+      max-width: 420px !important;
+      height: auto !important;
+      min-height: 500px !important;
+      max-height: 700px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow-x: hidden !important;
+    }
+    
+    .popup-container {
+      width: 420px !important;
+      min-width: 420px !important;
+      max-width: 420px !important;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>DeepAlias Hunter Pro</h1>
-            <div class="version">v4.0.0</div>
-        </header>
-
-        <div class="search-container">
-            <form id="search-form">
-                <div class="input-group">
-                    <input type="text" id="username-input" placeholder="Digite um username, nome ou termo para buscar..." required>
-                    <button type="submit" id="search-button">Buscar</button>
-                </div>
-                <div class="options-toggle">
-                    <a href="#" id="toggle-options">Opções avançadas</a>
-                </div>
-                <div class="advanced-options" id="advanced-options">
-                    <div class="option-group">
-                        <label>
-                            <input type="checkbox" id="include-adult" checked>
-                            Incluir sites adultos
-                        </label>
-                    </div>
-                    <div class="option-group">
-                        <label>
-                            <input type="checkbox" id="include-tor">
-                            Incluir deep/dark web (Tor)
-                        </label>
-                    </div>
-                    <div class="option-group">
-                        <label>Categorias prioritárias:</label>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" name="priority-category" value="adult"> Adulto</label>
-                            <label><input type="checkbox" name="priority-category" value="social"> Social</label>
-                            <label><input type="checkbox" name="priority-category" value="forum"> Fóruns</label>
-                            <label><input type="checkbox" name="priority-category" value="images"> Imagens</label>
-                            <label><input type="checkbox" name="priority-category" value="linkinbio"> Link-in-bio</label>
-                        </div>
-                    </div>
-                    <div class="option-group">
-                        <label>
-                            <span>Máx. variações por plataforma:</span>
-                            <select id="max-variations">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="5">5</option>
-                                <option value="10">10</option>
-                            </select>
-                        </label>
-                    </div>
-                </div>
-            </form>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="header-content">
+        <img src="../assets/icons/icon32.png" alt="DeepAlias Hunter Pro" class="logo">
+        <div class="title-section">
+          <h1>DeepAlias Hunter Pro</h1>
+          <span class="version">v5.0.0</span>
         </div>
-
-        <div class="results-container" id="results-container">
-            <div class="status-bar" id="status-bar">
-                <div class="progress-bar">
-                    <div class="progress" id="progress-bar" style="width: 0%"></div>
-                </div>
-                <div class="status-text" id="status-text">Pronto para buscar</div>
-                <button id="cancel-button" class="cancel-button" style="display: none;">Cancelar</button>
-            </div>
-
-            <div class="results-summary" id="results-summary" style="display: none;">
-                <div class="summary-item">
-                    <span class="label">Encontrados:</span>
-                    <span class="value" id="found-count">0</span>
-                </div>
-                <div class="summary-item">
-                    <span class="label">Alto risco:</span>
-                    <span class="value" id="high-risk-count">0</span>
-                </div>
-                <div class="summary-item">
-                    <span class="label">Plataformas verificadas:</span>
-                    <span class="value" id="platforms-count">0</span>
-                </div>
-            </div>
-
-            <div class="results-list" id="results-list"></div>
-
-            <div class="no-results" id="no-results" style="display: none;">
-                <p>Nenhum resultado encontrado para este username.</p>
-            </div>
-
-            <div class="export-options" id="export-options" style="display: none;">
-                <button id="export-json" class="export-button">Exportar JSON</button>
-                <button id="export-csv" class="export-button">Exportar CSV</button>
-                <button id="export-html" class="export-button">Exportar HTML</button>
-            </div>
+      </div>
+      <div class="connection-section">
+        <span id="connection-status" class="status connecting">Conectando...</span>
+        <div id="connection-info" class="connection-info" style="display: none;">
+          <span class="info-icon">🛰️</span>
+          <span class="info-text">Conectado via instância secundária</span>
+          <span class="more-info" title="A extensão está usando uma instância secundária para comunicação.">?</span>
         </div>
+      </div>
+    </header>
 
-        <footer>
-            <div class="footer-links">
-                <a href="#" id="open-settings">Configurações</a>
-                <a href="#" id="open-help">Ajuda</a>
-                <a href="#" id="open-about">Sobre</a>
-                <a href="#" id="firefoxDiagnostic" class="diagnostico-btn">🦊 Diagnóstico Firefox</a>
-            </div>
-        </footer>
+    <!-- Error Container -->
+    <div id="error-container" class="error-container" style="display: none;"></div>
+
+    <!-- Search Section -->
+    <section class="search-section">
+      <div class="search-form">
+        <div class="input-group">
+          <input 
+            type="text" 
+            id="username-input" 
+            placeholder="Digite o username para buscar..." 
+            maxlength="50"
+            class="username-input"
+          >
+          <button id="search-button" class="search-button">🔍 Buscar</button>
+        </div>
+        
+        <div class="search-options">
+          <div class="option-group">
+            <label for="max-results" class="option-label">Máx. Resultados:</label>
+            <input type="number" id="max-results" min="1" max="100" value="50" class="option-input">
+          </div>
+          
+          <div class="option-group">
+            <label class="option-label">
+              <input type="checkbox" id="search-all" class="option-checkbox">
+              <span class="checkmark"></span>
+              Buscar em todas plataformas
+            </label>
+          </div>
+          
+          <div class="option-group">
+            <label class="option-label">
+              <input type="checkbox" id="advanced-search" class="option-checkbox">
+              <span class="checkmark"></span>
+              Busca avançada
+            </label>
+          </div>
+          
+          <div class="option-group">
+            <label class="option-label">
+              <input type="checkbox" id="force-complete-search" class="option-checkbox">
+              <span class="checkmark"></span>
+              Busca completa (400+ plataformas)
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading Indicator -->
+    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+      <div class="loading-spinner"></div>
+      <p>Buscando usernames...</p>
     </div>
 
-    <script type="module" src="../assets/js/popup.js"></script>
+    <!-- Platform Stats -->
+    <section class="platform-section">
+      <div id="platform-stats" class="platform-stats">
+        <div class="stats-content">
+          <span class="platform-count">Carregando plataformas...</span>
+          <button id="reload-platforms" class="reload-button" title="Recarregar lista de plataformas">↻</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section">
+      <div id="results-container" class="results-container">
+        <!-- Resultados serão inseridos aqui dinamicamente -->
+      </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="actions-section">
+      <div class="action-buttons">
+        <button id="data-view-button" class="action-button data-view-button">
+          <span class="icon">📊</span>
+          <span>Visualizar Dados</span>
+        </button>
+        
+        <button id="export-button" class="action-button export-button">
+          <span class="icon">💾</span>
+          <span>Exportar</span>
+        </button>
+        
+        <button id="settings-button" class="action-button settings-button">
+          <span class="icon">⚙️</span>
+          <span>Configurações</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="popup-footer">
+      <div class="footer-content">
+        <span class="copyright">© 2025 drrdanilosa</span>
+        <span class="last-update">Atualizado: <span id="last-update-time">2025-06-04</span></span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../assets/js/popup.js"></script>
 </body>
 </html>

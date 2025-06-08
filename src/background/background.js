@@ -1,402 +1,984 @@
 /**
- * Background Script - Main background script for the extension
- * @version 4.0.0
+ * DeepAlias Hunter Pro - Background Script Principal
+ * @author drrdanilosa
+ * @version 5.0.0
+ * @date 2025-06-04 04:04:59
+ * @updated_by drrdanilosa
  */
-import container from '../utils/DependencyContainer.js';
-import { Logger } from '../utils/Logger.js';
 
-const logger = new Logger({ level: 'info' });
+// ========================================
+// 1. EVITAR REDECLARAÇÃO - VERIFICAR SE JÁ EXISTE
+// ========================================
 
-// Polyfill para compatibilidade entre Chrome e Firefox
-const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+// Verificar se variáveis já foram declaradas pelo background_simple.js
+if (typeof window.deepAliasBackground === 'undefined') {
+  window.deepAliasBackground = {};
+}
+
+// Usar namespace para evitar conflitos
+const DeepAliasBackground = window.deepAliasBackground;
+
+// ========================================
+// 2. VARIÁVEIS GLOBAIS (SEM REDECLARAÇÃO)
+// ========================================
+
+// Inicializar apenas se não existir
+if (!DeepAliasBackground.initialized) {
+  DeepAliasBackground.instanceId = `bg_${Math.random().toString(36).substring(2, 16)}_${Date.now()}`;
+  DeepAliasBackground.isMainInstance = false;
+  DeepAliasBackground.lockAcquired = false;
+  DeepAliasBackground.lockCheckInterval = null;
+  DeepAliasBackground.isInitialized = false;
+  DeepAliasBackground.initializationPromise = null;
+  DeepAliasBackground.activeSearches = new Map();
+  DeepAliasBackground.messageQueue = new Map();
+  
+  // Referências para serviços
+  DeepAliasBackground.dataAnalyzer = null;
+  DeepAliasBackground.platformService = null;
+  DeepAliasBackground.searchEngine = null;
+  
+  DeepAliasBackground.initialized = true;
+  
+  console.log('[BACKGROUND] Namespace inicializado com instanceId:', DeepAliasBackground.instanceId);
+}
+
+// ========================================
+// 3. FUNÇÕES DE CONTROLE DE INSTÂNCIA
+// ========================================
 
 /**
- * Initialize the extension
+ * Verifica e tenta adquirir o lock para ser a instância principal
  */
-async function initialize() {
-  logger.info('Initializing DeepAlias Hunter Pro (Enhanced)...');
-  
+function checkAndAcquireLock() {
   try {
-    // Initialize dependency container
-    await container.initialize();
+    const currentLock = localStorage.getItem('deepalias_instance_lock');
     
-    // Get services
-    const eventBus = container.get('eventBus');
-    const storageService = container.get('storageService');
-    
-    // Register message listeners
-    browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      handleMessage(message, sender)
-        .then(response => sendResponse(response))
-        .catch(error => {
-          logger.error('Message handler error', error);
-          sendResponse({ success: false, error: error.message || 'Unknown error' });
-        });
-      return true; // Indica que a resposta será enviada de forma assíncrona
-    });
-    
-    // Set up alarm for cache cleanup
-    browserAPI.alarms.create('cacheCleanup', { periodInMinutes: 60 });
-    browserAPI.alarms.onAlarm.addListener(handleAlarm);
-    
-    // Emit initialization event
-    eventBus.emit('extension:initialized', {
-      version: browserAPI.runtime.getManifest().version,
+    if (currentLock) {
+      const lockData = JSON.parse(currentLock);
+      const now = Date.now();
+      
+      if (now - lockData.timestamp > 10000) {
+        console.log('[BACKGROUND] Lock expirado detectado, assumindo controle.');
+        acquireLock();
+      } else if (lockData.instanceId === DeepAliasBackground.instanceId) {
+        acquireLock();
+      } else {
+        DeepAliasBackground.isMainInstance = false;
+        console.log(`[BACKGROUND] Instância secundária - Principal: ${lockData.instanceId}`);
+      }
+    } else {
+      acquireLock();
+    }
+  } catch (error) {
+    console.error('[BACKGROUND] Erro ao verificar lock:', error);
+  }
+}
+
+/**
+ * Adquire o lock para ser a instância principal
+ */
+function acquireLock() {
+  try {
+    const lockData = {
+      instanceId: DeepAliasBackground.instanceId,
       timestamp: Date.now()
+    };
+    
+    localStorage.setItem('deepalias_instance_lock', JSON.stringify(lockData));
+    
+    if (!DeepAliasBackground.lockAcquired) {
+      console.log('[BACKGROUND] Lock adquirido para instância', DeepAliasBackground.instanceId);
+      DeepAliasBackground.lockAcquired = true;
+      DeepAliasBackground.isMainInstance = true;
+      
+      if (!DeepAliasBackground.isInitialized) {
+        initializeServices();
+      }
+    }
+  } catch (error) {
+    console.error('[BACKGROUND] Erro ao adquirir lock:', error);
+  }
+}
+
+/**
+ * Libera o lock ao fechar a instância
+ */
+function releaseLock() {
+  try {
+    const currentLock = localStorage.getItem('deepalias_instance_lock');
+    
+    if (currentLock) {
+      const lockData = JSON.parse(currentLock);
+      
+      if (lockData.instanceId === DeepAliasBackground.instanceId) {
+        localStorage.removeItem('deepalias_instance_lock');
+        console.log('[BACKGROUND] Lock liberado para instância', DeepAliasBackground.instanceId);
+      }
+    }
+  } catch (error) {
+    console.error('[BACKGROUND] Erro ao liberar lock:', error);
+  }
+}
+
+// ========================================
+// 4. INICIALIZAÇÃO DE SERVIÇOS MOCK
+// ========================================
+
+/**
+ * Inicializa os serviços da extensão (versão mock para teste)
+ */
+async function initializeServices() {
+  if (DeepAliasBackground.isInitialized || DeepAliasBackground.initializationPromise) {
+    return DeepAliasBackground.initializationPromise || Promise.resolve();
+  }
+  
+  console.log('[BACKGROUND] Inicializando DeepAlias Hunter Pro v5.0.0...');
+  
+  DeepAliasBackground.initializationPromise = new Promise(async (resolve, reject) => {
+    try {
+      // Mock dos serviços para teste
+      DeepAliasBackground.platformService = {
+        getStats: () => ({
+          total: 400,
+          categories: 15,
+          isComplete: true,
+          lastLoaded: new Date().toISOString(),
+          source: 'mock'
+        }),
+        reloadPlatforms: async () => {
+          console.log('[BACKGROUND] Mock: Recarregando plataformas...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return {
+            total: 420,
+            categories: 16,
+            isComplete: true,
+            lastLoaded: new Date().toISOString()
+          };
+        },
+        getPlatforms: (options = {}) => {
+          const mockPlatforms = [
+            { name: 'GitHub', category: 'developer', domain: 'github.com' },
+            { name: 'LinkedIn', category: 'professional', domain: 'linkedin.com' },
+            { name: 'Twitter', category: 'social', domain: 'twitter.com' },
+            { name: 'Instagram', category: 'social', domain: 'instagram.com' },
+            { name: 'Facebook', category: 'social', domain: 'facebook.com' },
+            { name: 'YouTube', category: 'social', domain: 'youtube.com' },
+            { name: 'TikTok', category: 'social', domain: 'tiktok.com' },
+            { name: 'Reddit', category: 'social', domain: 'reddit.com' },
+            { name: 'Discord', category: 'gaming', domain: 'discord.com' },
+            { name: 'Telegram', category: 'messaging', domain: 'telegram.org' }
+          ];
+          return mockPlatforms.slice(0, options.limit || mockPlatforms.length);
+        }
+      };
+      
+      DeepAliasBackground.searchEngine = {
+        searchMultiplePlatforms: async (username, platforms, options) => {
+          console.log(`[BACKGROUND] Mock: Buscando '${username}' em ${platforms.length} plataformas`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          return platforms.map((platform, index) => ({
+            platform: platform.name,
+            username: username,
+            url: `https://${platform.domain}/${username}`,
+            status: index % 3 === 0 ? 'found' : 'not_found',
+            favicon: `https://www.google.com/s2/favicons?domain=${platform.domain}&sz=32`,
+            domain: platform.domain
+          }));
+        },
+        clearCache: () => {
+          console.log('[BACKGROUND] Mock: Cache limpo');
+        },
+        getStats: () => ({
+          totalSearches: 42,
+          cacheHits: 15,
+          averageTime: 2500
+        })
+      };
+      
+      DeepAliasBackground.dataAnalyzer = {
+        getAllTabsData: () => ({
+          'tab1': { sensitiveContent: [] },
+          'tab2': { sensitiveContent: ['email', 'phone'] }
+        })
+      };
+      
+      DeepAliasBackground.isInitialized = true;
+      console.log('[BACKGROUND] Serviços mock inicializados com sucesso');
+      resolve();
+      
+    } catch (error) {
+      console.error('[BACKGROUND] Erro durante inicialização de serviços:', error);
+      reject(error);
+    }
+  });
+  
+  return DeepAliasBackground.initializationPromise;
+}
+
+// ========================================
+// 5. FUNÇÕES DE TRATAMENTO DE MENSAGENS
+// ========================================
+
+/**
+ * Processa solicitação de busca
+ */
+async function handleSearchRequest(message) {
+  try {
+    console.log('[BACKGROUND] Processando solicitação de busca:', message);
+    
+    if (!DeepAliasBackground.isMainInstance) {
+      throw new Error('SECONDARY_INSTANCE');
+    }
+    
+    await initializeServices();
+    
+    if (!DeepAliasBackground.searchEngine) {
+      throw new Error('Motor de busca não inicializado');
+    }
+    
+    const { username, options = {} } = message;
+    
+    if (!username || username.length < 2) {
+      throw new Error('Username inválido');
+    }
+    
+    const searchKey = `${username}_${JSON.stringify(options)}`;
+    if (DeepAliasBackground.activeSearches.has(searchKey)) {
+      console.log('[BACKGROUND] Busca já em andamento para:', username);
+      return DeepAliasBackground.activeSearches.get(searchKey);
+    }
+    
+    const searchPromise = performSearch(username, options);
+    DeepAliasBackground.activeSearches.set(searchKey, searchPromise);
+    
+    searchPromise.finally(() => {
+      DeepAliasBackground.activeSearches.delete(searchKey);
     });
     
-    logger.info('DeepAlias Hunter Pro (Enhanced) initialized successfully');
+    return await searchPromise;
+    
   } catch (error) {
-    logger.error('Failed to initialize extension', error);
+    console.error('[BACKGROUND] Erro na solicitação de busca:', error);
+    throw error;
   }
 }
 
 /**
- * Handle messages from content scripts and popup
- * @param {object} message - Message object
- * @param {object} sender - Sender information
- * @returns {Promise<any>} - Response
+ * Executa a busca propriamente dita
  */
-async function handleMessage(message, sender) {
-  logger.debug('Received message', { type: message.type, sender: sender.id });
-  
+async function performSearch(username, options = {}) {
   try {
-    switch (message.type) {
-      case 'search':
-        return handleSearch(message.data);
-      
-      case 'getStatus':
-        return handleGetStatus(message.data);
-      
-      case 'cancelSearch':
-        return handleCancelSearch(message.data);
-      
-      case 'getSettings':
-        return handleGetSettings();
-      
-      case 'saveSettings':
-        return handleSaveSettings(message.data);
-      
-      // Adicionado tratamento para mensagens do content script
-      case 'content:loaded':
-        return handleContentLoaded(message.data, sender);
-      
-      case 'content:pageData':
-        return handleContentPageData(message.data, sender);
-      
-      case 'testTorConnection':
-        return handleTestTorConnection(message.data);
-      
-      case 'testApiKey':
-        return handleTestApiKey(message.data);
-      
-      default:
-        logger.warn('Unknown message type', { type: message.type });
-        return { success: false, error: 'Unknown message type' };
-    }
-  } catch (error) {
-    logger.error('Error handling message', error, { type: message.type });
-    return { success: false, error: error.message || 'Unknown error' };
-  }
-}
-
-/**
- * Handle content:loaded message from content script
- * @param {object} data - Content data
- * @param {object} sender - Sender information
- * @returns {Promise<object>} - Response
- */
-async function handleContentLoaded(data, sender) {
-  logger.debug('Content script loaded', { 
-    url: data.url, 
-    tabId: sender.tab ? sender.tab.id : 'unknown' 
-  });
-  
-  // Registrar que o content script foi carregado para esta aba
-  try {
-    const tabId = sender.tab ? sender.tab.id : null;
-    if (tabId) {
-      // Opcionalmente, armazenar informações sobre tabs com content script ativo
-      const storageService = container.get('storageService');
-      const activeContentScripts = await storageService.get('activeContentScripts', {});
-      
-      activeContentScripts[tabId] = {
-        url: data.url,
-        title: data.title,
-        timestamp: Date.now()
-      };
-      
-      await storageService.set({ 'activeContentScripts': activeContentScripts });
+    console.log(`[BACKGROUND] Iniciando busca para '${username}' com opções:`, options);
+    
+    const startTime = Date.now();
+    
+    const searchOptions = {
+      maxResults: options.maxResults || 50,
+      timeout: options.timeout || 30000,
+      searchAll: options.searchAll || false,
+      advancedSearch: options.advancedSearch || false,
+      forceCompleteSearch: options.forceCompleteSearch || false,
+      ...options
+    };
+    
+    const platforms = DeepAliasBackground.platformService.getPlatforms({ 
+      limit: searchOptions.forceCompleteSearch ? undefined : searchOptions.maxResults 
+    });
+    
+    if (platforms.length === 0) {
+      throw new Error('Nenhuma plataforma disponível para busca');
     }
     
-    return { success: true };
-  } catch (error) {
-    logger.error('Error handling content:loaded', error);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Handle content:pageData message from content script
- * @param {object} data - Page data
- * @param {object} sender - Sender information
- * @returns {Promise<object>} - Response
- */
-async function handleContentPageData(data, sender) {
-  logger.debug('Received page data from content script', { 
-    url: data.url,
-    tabId: sender.tab ? sender.tab.id : 'unknown',
-    imageCount: data.imageUrls ? data.imageUrls.length : 0,
-    usernameCount: data.detectedUsernames ? data.detectedUsernames.length : 0
-  });
-  
-  try {
-    // Processar dados da página conforme necessário
-    const tabId = sender.tab ? sender.tab.id : null;
+    const results = await DeepAliasBackground.searchEngine.searchMultiplePlatforms(username, platforms, searchOptions);
     
-    if (tabId && data.detectedUsernames && data.detectedUsernames.length > 0) {
-      // Armazenar usernames detectados para uso futuro
-      const storageService = container.get('storageService');
-      const detectedUsernames = await storageService.get('detectedUsernames', {});
-      
-      detectedUsernames[data.url] = {
-        usernames: data.detectedUsernames,
-        timestamp: Date.now()
-      };
-      
-      await storageService.set({ 'detectedUsernames': detectedUsernames });
-      
-      // Opcionalmente, analisar imagens se habilitado
-      if (data.imageUrls && data.imageUrls.length > 0) {
-        const settings = await storageService.get('settings', {});
-        
-        if (settings.imageAnalysisEnabled) {
-          const imageAnalyzer = container.get('imageAnalyzer');
-          // Processar apenas as primeiras 5 imagens para evitar sobrecarga
-          const imagesToAnalyze = data.imageUrls.slice(0, 5);
-          
-          for (const imageUrl of imagesToAnalyze) {
-            imageAnalyzer.queueImageForAnalysis(imageUrl, data.url);
-          }
+    const searchTime = Date.now() - startTime;
+    console.log(`[BACKGROUND] Busca concluída em ${searchTime}ms. Encontrados ${results.length} resultados`);
+    
+    try {
+      await browser.storage.local.set({
+        [`search_${username}_${Date.now()}`]: {
+          username,
+          results,
+          timestamp: new Date().toISOString(),
+          searchTime,
+          options: searchOptions
         }
+      });
+    } catch (storageError) {
+      console.warn('[BACKGROUND] Erro ao salvar resultados no storage:', storageError);
+    }
+    
+    return {
+      results,
+      searchTime,
+      instanceId: DeepAliasBackground.instanceId,
+      username,
+      options: searchOptions,
+      platformsSearched: platforms.length
+    };
+    
+  } catch (error) {
+    console.error('[BACKGROUND] Erro durante execução da busca:', error);
+    throw error;
+  }
+}
+
+/**
+ * Trata solicitações de estatísticas de plataformas
+ */
+function handlePlatformStatsRequest() {
+  try {
+    if (!DeepAliasBackground.platformService) {
+      return {
+        status: 'error',
+        message: 'Serviço de plataformas não inicializado',
+        stats: { total: 0, categories: 0, isComplete: false }
+      };
+    }
+    
+    const stats = DeepAliasBackground.platformService.getStats();
+    console.log('[BACKGROUND] Estatísticas de plataformas solicitadas:', stats);
+    
+    return {
+      status: 'success',
+      stats: {
+        total: stats.total || 0,
+        categories: stats.categories || 0,
+        isComplete: stats.isComplete || false,
+        lastLoaded: stats.lastLoaded || null,
+        source: stats.source || 'unknown'
+      }
+    };
+  } catch (error) {
+    console.error('[BACKGROUND] Erro ao obter estatísticas de plataformas:', error);
+    return {
+      status: 'error',
+      message: error.message,
+      stats: { total: 0, categories: 0, isComplete: false }
+    };
+  }
+}
+
+/**
+ * Trata solicitações de recarga de plataformas
+ */
+async function handleReloadPlatformsRequest() {
+  try {
+    console.log('[BACKGROUND] Solicitação de recarga de plataformas');
+    
+    if (!DeepAliasBackground.platformService) {
+      throw new Error('Serviço de plataformas não inicializado');
+    }
+    
+    const newStats = await DeepAliasBackground.platformService.reloadPlatforms();
+    
+    console.log('[BACKGROUND] Plataformas recarregadas:', newStats);
+    
+    return {
+      status: 'success',
+      message: 'Plataformas recarregadas com sucesso',
+      stats: {
+        total: newStats.total || 0,
+        categories: newStats.categories || 0,
+        isComplete: newStats.isComplete || false,
+        lastLoaded: newStats.lastLoaded || null
+      }
+    };
+  } catch (error) {
+    console.error('[BACKGROUND] Erro ao recarregar plataformas:', error);
+    return {
+      status: 'error',
+      message: error.message,
+      stats: { total: 0, categories: 0, isComplete: false }
+    };
+  }
+}
+
+/**
+ * Trata solicitações de favicon com bypass de CORS
+ */
+async function handleFaviconRequest(message) {
+  try {
+    const domain = message.url || message.domain;
+    
+    if (!domain) {
+      throw new Error('URL ou domain não fornecido');
+    }
+    
+    // Lista de tentativas de favicon em ordem de prioridade
+    const faviconUrls = [
+      `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
+      `https://favicon.yandex.net/favicon/${domain}`,
+      `https://www.google.com/s2/favicons?domain=${domain}&sz=32`,
+      `https://${domain}/favicon.ico`,
+      `https://www.${domain}/favicon.ico`
+    ];
+    
+    // Tentar cada URL até encontrar uma que funcione
+    for (const faviconUrl of faviconUrls) {
+      try {
+        console.log(`[BACKGROUND] Tentando favicon: ${faviconUrl}`);
+        
+        // Usar fetch com modo no-cors para evitar problemas de CORS
+        const response = await fetch(faviconUrl, {
+          method: 'HEAD',
+          mode: 'no-cors',
+          cache: 'force-cache'
+        });
+        
+        // Se chegou até aqui, a URL é válida
+        return {
+          status: 'success',
+          faviconUrl: faviconUrl,
+          domain: domain,
+          method: 'external_service'
+        };
+        
+      } catch (error) {
+        console.warn(`[BACKGROUND] Favicon falhou para ${faviconUrl}:`, error.message);
+        continue;
       }
     }
     
-    return { success: true };
+    // Se todas falharam, retornar ícone padrão
+    return {
+      status: 'fallback',
+      faviconUrl: browser.runtime.getURL('src/assets/icons/globe.png'),
+      domain: domain,
+      method: 'fallback'
+    };
+    
   } catch (error) {
-    logger.error('Error handling content:pageData', error);
-    return { success: false, error: error.message };
+    console.error('[BACKGROUND] Erro geral no handleFaviconRequest:', error);
+    throw error;
   }
 }
 
 /**
- * Handle test Tor connection request
- * @param {object} data - Connection parameters
- * @returns {Promise<object>} - Connection status
+ * Abre a visualização de dados
  */
-async function handleTestTorConnection(data) {
-  logger.info('Testing Tor connection', { proxy: data.torProxyUrl });
-  
+function openDataView() {
   try {
-    // Verificar se o serviço está disponível
-    if (!container.has('torConnector')) {
-      logger.warn('TorConnector service not available');
-      return {
-        success: false,
-        error: 'TorConnector service not available'
-      };
+    console.log('[BACKGROUND] Abrindo visualização de dados');
+    
+    browser.tabs.query({ url: browser.runtime.getURL('src/data_view/*') })
+      .then(tabs => {
+        if (tabs.length > 0) {
+          browser.tabs.update(tabs[0].id, { active: true });
+          browser.windows.update(tabs[0].windowId, { focused: true });
+        } else {
+          browser.tabs.create({
+            url: browser.runtime.getURL('src/data_view/data_view.html')
+          });
+        }
+      })
+      .catch(error => {
+        console.error('[BACKGROUND] Erro ao abrir visualização de dados:', error);
+      });
+  } catch (error) {
+    console.error('[BACKGROUND] Erro ao processar abertura de visualização:', error);
+  }
+}
+
+/**
+ * Realiza busca rápida com texto selecionado
+ */
+async function performQuickSearch() {
+  try {
+    console.log('[BACKGROUND] Executando busca rápida');
+    
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    
+    if (tabs.length === 0) {
+      throw new Error('Nenhuma aba ativa encontrada');
     }
     
-    const torConnector = container.get('torConnector');
-    const status = await torConnector.testConnection(data.torProxyUrl);
+    const activeTab = tabs[0];
     
-    return {
-      success: true,
-      status: status ? 'connected' : 'disconnected'
-    };
-  } catch (error) {
-    logger.error('Tor connection test error', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to test Tor connection'
-    };
-  }
-}
-
-/**
- * Handle test API key request
- * @param {object} data - API key parameters
- * @returns {Promise<object>} - API key validity
- */
-async function handleTestApiKey(data) {
-  logger.info('Testing API key', { service: data.service });
-  
-  try {
-    // Verificar se o serviço está disponível
-    if (!container.has('osintConnector')) {
-      logger.warn('OSINTConnector service not available');
-      return {
-        success: false,
-        error: 'OSINTConnector service not available'
-      };
+    const results = await browser.tabs.executeScript(activeTab.id, {
+      code: 'window.getSelection().toString().trim();'
+    });
+    
+    const selectedText = results[0];
+    
+    if (!selectedText || selectedText.length < 2) {
+      browser.notifications.create({
+        type: 'basic',
+        iconUrl: browser.runtime.getURL('src/assets/icons/icon48.png'),
+        title: 'DeepAlias Hunter Pro',
+        message: 'Selecione um nome de usuário para buscar rapidamente'
+      });
+      return;
     }
     
-    const osintConnector = container.get('osintConnector');
-    const isValid = await osintConnector.testApiKey(data.service, data.apiKey);
+    const username = selectedText.replace(/[^a-zA-Z0-9_.-]/g, '').substring(0, 50);
     
-    return {
-      success: true,
-      isValid
-    };
+    if (username.length < 2) {
+      browser.notifications.create({
+        type: 'basic',
+        iconUrl: browser.runtime.getURL('src/assets/icons/icon48.png'),
+        title: 'DeepAlias Hunter Pro',
+        message: 'Texto selecionado não é um nome de usuário válido'
+      });
+      return;
+    }
+    
+    await browser.storage.local.set({ lastSearchUsername: username });
+    
+    browser.browserAction.openPopup();
+    
+    console.log(`[BACKGROUND] Busca rápida configurada para: ${username}`);
+    
   } catch (error) {
-    logger.error('API key test error', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to test API key'
-    };
+    console.error('[BACKGROUND] Erro na busca rápida:', error);
+    
+    browser.notifications.create({
+      type: 'basic',
+      iconUrl: browser.runtime.getURL('src/assets/icons/icon48.png'),
+      title: 'DeepAlias Hunter Pro',
+      message: 'Erro ao executar busca rápida: ' + error.message
+    });
   }
 }
 
+// ========================================
+// 6. CONFIGURAÇÃO DE EVENT LISTENERS PRINCIPAIS
+// ========================================
+
 /**
- * Handle search request
- * @param {object} data - Search parameters
- * @returns {Promise<object>} - Search results
+ * Configura os listeners principais de eventos
  */
-async function handleSearch(data) {
-  logger.info('Handling search request', { username: data.username });
+function setupEventListeners() {
+  console.log('[BACKGROUND] Configurando event listeners...');
   
-  try {
-    const searchEngine = container.get('searchEngine');
-    const results = await searchEngine.search(data.username, data.options);
+  // Listener para comandos de teclado
+  if (browser.commands && browser.commands.onCommand) {
+    browser.commands.onCommand.addListener(command => {
+      console.log(`[BACKGROUND] Comando recebido: ${command}`);
+      
+      if (command === 'open-data-view') {
+        openDataView();
+      } else if (command === 'quick-search') {
+        performQuickSearch();
+      }
+    });
+  }
+  
+  // Listener para instalação/atualização da extensão
+  if (browser.runtime.onInstalled) {
+    browser.runtime.onInstalled.addListener(details => {
+      console.log('[BACKGROUND] Extensão instalada/atualizada:', details);
+      
+      if (details.reason === 'install') {
+        showWelcomeMessage();
+      } else if (details.reason === 'update') {
+        showUpdateMessage(details.previousVersion);
+      }
+    });
+  }
+  
+  // ✅ LISTENER PRINCIPAL PARA MENSAGENS (EXPANDIDO COM NOVOS HANDLERS)
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log('[BACKGROUND] Mensagem recebida:', {
+      message: message,
+      sender: sender,
+      timestamp: new Date().toISOString()
+    });
     
-    return {
-      success: true,
-      searchId: results.searchId,
-      results
-    };
+    const messageType = message.type || message.action || message;
+    
+    try {
+      switch (messageType) {
+        // ✅ NOVOS HANDLERS ADICIONADOS
+        case 'content:loaded':
+        case 'contentLoaded':
+          console.log('[BACKGROUND] Content script carregado no tab:', sender.tab?.id);
+          sendResponse({
+            status: 'acknowledged',
+            message: 'Background recebeu notificação de content loaded',
+            instanceId: DeepAliasBackground.instanceId,
+            timestamp: Date.now()
+          });
+          return true;
+          
+        case 'optionsUpdated':
+        case 'options:updated':
+          console.log('[BACKGROUND] Configurações atualizadas:', message.data || message.settings);
+          if (message.data || message.settings) {
+            const newSettings = message.data || message.settings;
+            browser.storage.local.set({ deepaliasSettings: newSettings })
+              .then(() => {
+                console.log('[BACKGROUND] Configurações atualizadas no storage:', newSettings);
+                sendResponse({
+                  status: 'success',
+                  message: 'Configurações atualizadas com sucesso',
+                  settings: newSettings
+                });
+              })
+              .catch(error => {
+                console.error('[BACKGROUND] Erro ao atualizar configurações:', error);
+                sendResponse({
+                  status: 'error',
+                  message: error.message
+                });
+              });
+          } else {
+            sendResponse({
+              status: 'acknowledged',
+              message: 'Notificação de atualização recebida'
+            });
+          }
+          return true;
+          
+        case 'ping':
+        case 'check-connection':
+          console.log('[BACKGROUND] Ping recebido, respondendo...');
+          sendResponse({
+            status: 'ok',
+            isMainInstance: DeepAliasBackground.isMainInstance,
+            instanceId: DeepAliasBackground.instanceId,
+            primaryInstanceId: DeepAliasBackground.isMainInstance ? DeepAliasBackground.instanceId : null,
+            timestamp: Date.now(),
+            initialized: DeepAliasBackground.isInitialized
+          });
+          return true;
+          
+        case 'startSearch':
+        case 'start-search':
+          console.log('[BACKGROUND] Processando busca...');
+          handleSearchRequest(message)
+            .then(results => {
+              console.log('[BACKGROUND] Busca concluída, enviando resposta');
+              sendResponse(results);
+            })
+            .catch(error => {
+              console.error('[BACKGROUND] Erro na busca:', error);
+              sendResponse({ 
+                error: error.message,
+                instanceId: DeepAliasBackground.instanceId,
+                isMainInstance: DeepAliasBackground.isMainInstance
+              });
+            });
+          return true;
+          
+        case 'getPlatformStats':
+        case 'get-platform-stats':
+          console.log('[BACKGROUND] Enviando estatísticas de plataformas...');
+          const statsResponse = handlePlatformStatsRequest();
+          sendResponse(statsResponse);
+          return true;
+          
+        case 'reloadPlatforms':
+        case 'reload-platforms':
+          console.log('[BACKGROUND] Recarregando plataformas...');
+          handleReloadPlatformsRequest()
+            .then(result => {
+              console.log('[BACKGROUND] Recarga de plataformas concluída');
+              sendResponse(result);
+            })
+            .catch(error => {
+              console.error('[BACKGROUND] Erro ao recarregar plataformas:', error);
+              sendResponse({
+                status: 'error',
+                message: error.message,
+                stats: { total: 0, categories: 0, isComplete: false }
+              });
+            });
+          return true;
+          
+        case 'openDataView':
+        case 'open-data-view':
+          console.log('[BACKGROUND] Abrindo visualização de dados...');
+          openDataView();
+          sendResponse({ status: 'success', message: 'Visualização de dados aberta' });
+          return true;
+          
+        case 'getSettings':
+        case 'get-settings':
+          console.log('[BACKGROUND] Carregando configurações...');
+          browser.storage.local.get('deepaliasSettings')
+            .then(data => {
+              const settings = data.deepaliasSettings || {
+                maxResults: 50,
+                timeout: 30000,
+                advancedSearch: false,
+                searchAll: true,
+                enableNotifications: true
+              };
+              sendResponse({ 
+                status: 'success', 
+                settings: settings,
+                source: 'storage'
+              });
+            })
+            .catch(error => {
+              console.error('[BACKGROUND] Erro ao carregar configurações:', error);
+              sendResponse({ 
+                status: 'error', 
+                message: error.message,
+                settings: {
+                  maxResults: 50,
+                  timeout: 30000,
+                  advancedSearch: false,
+                  searchAll: true,
+                  enableNotifications: true
+                }
+              });
+            });
+          return true;
+          
+        case 'saveSettings':
+        case 'save-settings':
+          console.log('[BACKGROUND] Salvando configurações:', message.data);
+          browser.storage.local.set({ deepaliasSettings: message.data })
+            .then(() => {
+              console.log('[BACKGROUND] Configurações salvas com sucesso');
+              sendResponse({ status: 'success', message: 'Configurações salvas' });
+            })
+            .catch(error => {
+              console.error('[BACKGROUND] Erro ao salvar configurações:', error);
+              sendResponse({ status: 'error', message: error.message });
+            });
+          return true;
+          
+        case 'getFavicon':
+        case 'get-favicon':
+          console.log('[BACKGROUND] Solicitação de favicon para:', message.url || message.domain);
+          handleFaviconRequest(message)
+            .then(result => {
+              sendResponse(result);
+            })
+            .catch(error => {
+              console.error('[BACKGROUND] Erro ao obter favicon:', error);
+              sendResponse({
+                status: 'error',
+                message: error.message,
+                fallbackIcon: browser.runtime.getURL('src/assets/icons/globe.png')
+              });
+            });
+          return true;
+          
+        case 'contentScript:ready':
+        case 'contentScriptReady':
+          console.log('[BACKGROUND] Content script pronto no tab:', sender.tab?.id);
+          sendResponse({
+            status: 'acknowledged',
+            extensionId: browser.runtime.id,
+            backgroundReady: true
+          });
+          return true;
+          
+        case 'clearCache':
+        case 'clear-cache':
+          console.log('[BACKGROUND] Limpando cache...');
+          if (DeepAliasBackground.searchEngine) {
+            DeepAliasBackground.searchEngine.clearCache();
+            sendResponse({ status: 'success', message: 'Cache limpo' });
+          } else {
+            sendResponse({ status: 'error', message: 'Motor de busca não inicializado' });
+          }
+          return true;
+          
+        case 'getSearchStats':
+        case 'get-search-stats':
+          console.log('[BACKGROUND] Solicitando estatísticas de busca...');
+          if (DeepAliasBackground.searchEngine) {
+            const searchStats = DeepAliasBackground.searchEngine.getStats();
+            sendResponse({ 
+              status: 'success', 
+              stats: searchStats || { totalSearches: 0, cacheHits: 0, averageTime: 0 }
+            });
+          } else {
+            sendResponse({ 
+              status: 'error', 
+              message: 'Motor de busca não inicializado',
+              stats: { totalSearches: 0, cacheHits: 0, averageTime: 0 }
+            });
+          }
+          return true;
+          
+        default:
+          console.warn(`[BACKGROUND] Tipo de mensagem desconhecido: ${messageType}`);
+          sendResponse({ 
+            status: 'warning', 
+            message: `Tipo de mensagem não reconhecido: ${messageType}`,
+            receivedMessage: message,
+            sender: {
+              tab: sender.tab?.id,
+              url: sender.tab?.url,
+              frameId: sender.frameId
+            },
+            availableTypes: [
+              'ping', 'startSearch', 'getPlatformStats', 'reloadPlatforms',
+              'openDataView', 'getSettings', 'saveSettings', 'content:loaded',
+              'optionsUpdated', 'getFavicon', 'contentScript:ready', 'clearCache',
+              'getSearchStats'
+            ],
+            timestamp: new Date().toISOString()
+          });
+          return true;
+      }
+    } catch (error) {
+      console.error('[BACKGROUND] Erro ao processar mensagem:', error);
+      sendResponse({ 
+        status: 'error', 
+        message: error.message,
+        instanceId: DeepAliasBackground.instanceId,
+        isMainInstance: DeepAliasBackground.isMainInstance
+      });
+      return true;
+    }
+  });
+  
+  // Listener para conexões port
+  browser.runtime.onConnect.addListener(port => {
+    if (port.name === "popup") {
+      console.log("[BACKGROUND] Conexão port estabelecida com popup");
+      
+      port.postMessage({
+        type: "connected",
+        status: "ok",
+        isMainInstance: DeepAliasBackground.isMainInstance,
+        instanceId: DeepAliasBackground.instanceId,
+        timestamp: Date.now(),
+        initialized: DeepAliasBackground.isInitialized
+      });
+      
+      port.onMessage.addListener(message => {
+        console.log("[BACKGROUND] Mensagem recebida do popup via port:", message);
+        
+        if (message.type === "ping") {
+          port.postMessage({
+            type: "pong",
+            status: DeepAliasBackground.isMainInstance ? "primary" : "secondary",
+            isMainInstance: DeepAliasBackground.isMainInstance,
+            instanceId: DeepAliasBackground.instanceId,
+            timestamp: Date.now(),
+            initialized: DeepAliasBackground.isInitialized
+          });
+        } else if (message.type === "init") {
+          port.postMessage({
+            type: "connected",
+            status: "ok",
+            isMainInstance: DeepAliasBackground.isMainInstance,
+            instanceId: DeepAliasBackground.instanceId,
+            timestamp: Date.now(),
+            initialized: DeepAliasBackground.isInitialized
+          });
+        }
+      });
+      
+      port.onDisconnect.addListener(() => {
+        console.log("[BACKGROUND] Popup desconectado via port");
+      });
+    }
+  });
+  
+  console.log('[BACKGROUND] Event listeners configurados com sucesso');
+}
+
+// ========================================
+// 7. FUNÇÕES DE NOTIFICAÇÃO
+// ========================================
+
+function showWelcomeMessage() {
+  try {
+    if (browser.notifications) {
+      browser.notifications.create({
+        type: 'basic',
+        iconUrl: browser.runtime.getURL('src/assets/icons/icon48.png'),
+        title: 'DeepAlias Hunter Pro',
+        message: 'Bem-vindo! Extensão instalada com sucesso. Clique no ícone para começar.'
+      });
+    }
+    
+    setTimeout(() => {
+      browser.tabs.create({
+        url: browser.runtime.getURL('src/options/options.html')
+      });
+    }, 2000);
   } catch (error) {
-    logger.error('Search error', error);
-    return {
-      success: false,
-      error: error.message || 'Search failed'
-    };
+    console.error('[BACKGROUND] Erro ao mostrar mensagem de boas-vindas:', error);
   }
 }
 
-/**
- * Handle get status request
- * @param {object} data - Status parameters
- * @returns {Promise<object>} - Search status
- */
-async function handleGetStatus(data) {
-  logger.debug('Handling get status request', { searchId: data.searchId });
-  
+function showUpdateMessage(previousVersion) {
   try {
-    const searchEngine = container.get('searchEngine');
-    const status = searchEngine.getSearchStatus(data.searchId);
-    
-    return {
-      success: true,
-      status
-    };
-  } catch (error) {
-    logger.error('Get status error', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to get status'
-    };
-  }
-}
-
-/**
- * Handle cancel search request
- * @param {object} data - Cancel parameters
- * @returns {Promise<object>} - Cancel result
- */
-async function handleCancelSearch(data) {
-  logger.info('Handling cancel search request', { searchId: data.searchId });
-  
-  try {
-    const searchEngine = container.get('searchEngine');
-    const cancelled = searchEngine.cancelSearch(data.searchId);
-    
-    return {
-      success: true,
-      cancelled
-    };
-  } catch (error) {
-    logger.error('Cancel search error', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to cancel search'
-    };
-  }
-}
-
-/**
- * Handle get settings request
- * @returns {Promise<object>} - Settings
- */
-async function handleGetSettings() {
-  logger.debug('Handling get settings request');
-  
-  try {
-    const storageService = container.get('storageService');
-    const settings = await storageService.get('settings', {});
-    
-    return {
-      success: true,
-      settings
-    };
-  } catch (error) {
-    logger.error('Get settings error', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to get settings'
-    };
-  }
-}
-
-/**
- * Handle save settings request
- * @param {object} data - Settings to save
- * @returns {Promise<object>} - Save result
- */
-async function handleSaveSettings(data) {
-  logger.info('Handling save settings request');
-  
-  try {
-    const storageService = container.get('storageService');
-    await storageService.set({ 'settings': data.settings });
-    
-    return {
-      success: true
-    };
-  } catch (error) {
-    logger.error('Save settings error', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to save settings'
-    };
-  }
-}
-
-/**
- * Handle alarms
- * @param {object} alarm - Alarm information
- */
-async function handleAlarm(alarm) {
-  logger.debug('Handling alarm', { name: alarm.name });
-  
-  try {
-    if (alarm.name === 'cacheCleanup') {
-      const storageService = container.get('storageService');
-      await storageService.clearExpiredCache();
+    if (browser.notifications) {
+      browser.notifications.create({
+        type: 'basic',
+        iconUrl: browser.runtime.getURL('src/assets/icons/icon48.png'),
+        title: 'DeepAlias Hunter Pro',
+        message: `Atualizado para v5.0.0 (anterior: ${previousVersion}). Novas funcionalidades disponíveis!`
+      });
     }
   } catch (error) {
-    logger.error('Alarm handler error', error, { name: alarm.name });
+    console.error('[BACKGROUND] Erro ao mostrar mensagem de atualização:', error);
   }
 }
 
-// Initialize the extension
-initialize();
+// ========================================
+// 8. INICIALIZAÇÃO PRINCIPAL
+// ========================================
+
+/**
+ * Inicializa o script de background
+ */
+function initializeBackgroundScript() {
+  try {
+    console.log('[BACKGROUND] Background script iniciando...', {
+      browser: 'Firefox',
+      timestamp: new Date().toISOString(),
+      version: '5.0.0',
+      instanceId: DeepAliasBackground.instanceId
+    });
+    
+    setupEventListeners();
+    
+    checkAndAcquireLock();
+    DeepAliasBackground.lockCheckInterval = setInterval(checkAndAcquireLock, 5000);
+    
+    window.addEventListener('beforeunload', releaseLock);
+    
+    window.isMainInstance = DeepAliasBackground.isMainInstance;
+    window.instanceId = DeepAliasBackground.instanceId;
+    window.platformService = DeepAliasBackground.platformService;
+    window.dataAnalyzer = DeepAliasBackground.dataAnalyzer;
+    window.searchEngine = DeepAliasBackground.searchEngine;
+    
+    console.log('[BACKGROUND] ✅ Background script inicializado com sucesso!');
+    
+  } catch (error) {
+    console.error('[BACKGROUND] ❌ Erro durante inicialização:', error);
+  }
+}
+
+// ========================================
+// 9. INICIALIZAÇÃO AUTOMÁTICA
+// ========================================
+
+if (!DeepAliasBackground.scriptInitialized) {
+  DeepAliasBackground.scriptInitialized = true;
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeBackgroundScript);
+  } else {
+    initializeBackgroundScript();
+  }
+}
+
+console.log('[BACKGROUND] Script carregado - instanceId:', DeepAliasBackground.instanceId);
+
+// Exportar para uso externo
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    handleSearchRequest,
+    handlePlatformStatsRequest,
+    handleReloadPlatformsRequest,
+    handleFaviconRequest,
+    openDataView,
+    performQuickSearch
+  };
+}

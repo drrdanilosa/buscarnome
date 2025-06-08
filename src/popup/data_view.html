@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepAlias Hunter Pro - Análise de Dados</title>
+    <link rel="stylesheet" href="../assets/css/data_view.css">
+</head>
+<body>
+    <div class="header">
+        <h1>DeepAlias Hunter Pro <span class="version">v5.0.0</span></h1>
+        <div class="tabs">
+            <button id="tab-summary" class="tab-button active">Resumo</button>
+            <button id="tab-usernames" class="tab-button">Usernames</button>
+            <button id="tab-sensitive" class="tab-button">Conteúdo Sensível</button>
+            <button id="tab-export" class="tab-button">Exportar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Painel de resumo -->
+        <div id="panel-summary" class="panel active">
+            <div class="stats-overview">
+                <div class="stat-card">
+                    <h3>Total de Páginas</h3>
+                    <div id="total-pages" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Usernames Detectados</h3>
+                    <div id="total-usernames" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Imagens Analisadas</h3>
+                    <div id="total-images" class="stat-value">0</div>
+                </div>
+                <div class="stat-card alert">
+                    <h3>Conteúdo Sensível</h3>
+                    <div id="total-sensitive" class="stat-value">0</div>
+                </div>
+            </div>
+
+            <div class="recent-activity">
+                <h3>Atividade Recente</h3>
+                <div id="recent-list" class="recent-list">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel de usernames -->
+        <div id="panel-usernames" class="panel">
+            <div class="filter-bar">
+                <input type="text" id="username-filter" placeholder="Filtrar usernames...">
+                <select id="username-sort">
+                    <option value="recent">Mais recentes</option>
+                    <option value="sources">Mais fontes</option>
+                    <option value="alpha">Alfabética</option>
+                </select>
+            </div>
+
+            <div class="username-list" id="username-list">
+                <div class="loading">Carregando usernames...</div>
+            </div>
+        </div>
+
+        <!-- Painel de conteúdo sensível -->
+        <div id="panel-sensitive" class="panel">
+            <div class="filter-bar">
+                <select id="sensitive-category">
+                    <option value="all">Todas categorias</option>
+                    <option value="adult">Adulto</option>
+                    <option value="suggestive">Sugestivo</option>
+                    <option value="financial">Financeiro</option>
+                    <option value="personal">Pessoal</option>
+                </select>
+                <select id="sensitive-level">
+                    <option value="all">Todos níveis</option>
+                    <option value="high">Alto</option>
+                    <option value="medium">Médio</option>
+                    <option value="low">Baixo</option>
+                </select>
+            </div>
+
+            <div class="sensitive-list" id="sensitive-list">
+                <div class="loading">Carregando alertas...</div>
+            </div>
+        </div>
+
+        <!-- Painel de exportação -->
+        <div id="panel-export" class="panel">
+            <div class="export-options">
+                <h3>Exportar Dados</h3>
+                
+                <div class="option-group">
+                    <label>Formato:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="export-format" value="json" checked> JSON
+                        </label>
+                        <label>
+                            <input type="radio" name="export-format" value="csv"> CSV
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="option-group">
+                    <label>Escopo:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="export-scope" value="all" checked> Todos os dados
+                        </label>
+                        <label>
+                            <input type="radio" name="export-scope" value="current"> Apenas aba atual
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="option-group">
+                    <label>Incluir:</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="include-visits" checked> Histórico de visitas
+                        </label>
+                        <label>
+                            <input type="checkbox" name="include-usernames" checked> Usernames
+                        </label>
+                        <label>
+                            <input type="checkbox" name="include-sensitive" checked> Conteúdo sensível
+                        </label>
+                        <label>
+                            <input type="checkbox" name="include-stats" checked> Estatísticas
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="export-actions">
+                    <button id="export-button" class="primary-button">Exportar</button>
+                    <button id="clear-data-button" class="danger-button">Limpar Dados</button>
+                </div>
+            </div>
+            
+            <div class="export-preview">
+                <h3>Pré-visualização</h3>
+                <pre id="export-preview"></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="connection-status">
+            <span id="connection-status" class="status connected">Conectado</span>
+        </div>
+        <div class="actions">
+            <button id="back-to-main" class="text-button">Voltar</button>
+        </div>
+    </div>
+
+    <script src="../modules/data_analyzer.js"></script>
+    <script src="../assets/js/data_view.js"></script>
+</body>
+</html>

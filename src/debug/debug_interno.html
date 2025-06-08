@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug DeepAlias Hunter Pro - Comunicação Interna</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .header-info {
+            background: linear-gradient(45deg, #4caf50, #45a049);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+        button {
+            padding: 12px 24px;
+            margin: 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+        .log-container {
+            max-height: 500px;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-top: 20px;
+            border: 2px solid #444;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background-color: #28a745; }
+        .status-offline { background-color: #dc3545; }
+        .status-warning { background-color: #ffc107; }        .grid-tests {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .log-init {
+            color: #00ff00;
+        }
+        .test-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .test-duration {
+            font-size: 12px;
+        }
+        .test-result-details {
+            margin-top: 8px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Debug Interno - DeepAlias Hunter Pro</h1>
+        
+        <div class="header-info">
+            <strong>✅ CONTEXTO PRIVILEGIADO DA EXTENSÃO</strong><br>
+            Este debug está sendo executado dentro do ambiente da extensão com acesso completo às APIs do browser.
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Informações do Ambiente</h2>
+            <div id="environment-info" class="test-result info">
+                <strong>Carregando informações do ambiente...</strong>
+            </div>
+        </div>
+          <div class="test-section">
+            <h2>🧪 Testes de Comunicação Interna</h2>
+            <div class="grid-tests">
+                <button id="btn-ping">📡 Ping</button>
+                <button id="btn-health">💓 Health</button>
+                <button id="btn-settings">⚙️ Settings</button>
+                <button id="btn-save">💾 Save</button>
+                <button id="btn-debug">🔍 Debug</button>
+                <button id="btn-status">📈 Status</button>
+                <button id="btn-carga">🚀 Carga</button>
+                <button id="btn-todos">🔄 Todos</button>
+                <button id="btn-limpar">🗑️ Limpar</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Resultados dos Testes</h2>
+            <div id="test-results"></div>
+        </div>
+          <div class="log-container" id="log-container">
+            <div id="logs">
+                <span class="log-init">🚀 Sistema de logs iniciado - Contexto: moz-extension://</span>
+            </div>
+        </div>
+    </div>    <script src="debug_interno.js"></script>
+</body>
+</html>

@@ -1,461 +1,246 @@
 /**
- * Options.js - Script para a página de configurações da extensão
- * @version 4.0.0
+ * DeepAlias Hunter Pro - Options Script
+ * @author drrdanilosa
+ * @version 4.0.1
+ * @date 2025-06-03
  */
 
-// Polyfill para compatibilidade entre Chrome e Firefox
-const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+// Função para enviar mensagens para o background com retry
+function sendMessageToBackground(message, timeout = 5000) {
+    return new Promise((resolve, reject) => {
+        try {
+            // Adicionar metadados à mensagem
+            const enhancedMessage = {
+                ...message,
+                _timestamp: Date.now(),
+                _source: 'options'
+            };
+            
+            // Configurar timeout
+            const timeoutId = setTimeout(() => {
+                console.error('Timeout excedido ao enviar mensagem para background');
+                reject(new Error('Timeout ao comunicar com background script'));
+            }, timeout);
+            
+            // Enviar mensagem
+            browser.runtime.sendMessage(enhancedMessage)
+                .then(response => {
+                    clearTimeout(timeoutId);
+                    
+                    if (!response) {
+                        reject(new Error('Resposta vazia do background'));
+                        return;
+                    }
+                    
+                    if (response.status === 'error') {
+                        reject(new Error(response.error || 'Erro desconhecido'));
+                        return;
+                    }
+                    
+                    resolve(response);
+                })
+                .catch(error => {
+                    clearTimeout(timeoutId);
+                    
+                    // Tentar via localStorage como fallback
+                    if (message.type === 'getSettings') {
+                        try {
+                            const settings = JSON.parse(localStorage.getItem('deepaliasSettings') || '{}');
+                            if (Object.keys(settings).length > 0) {
+                                console.log('Usando configurações do localStorage como fallback');
+                                resolve({ status: 'success', settings });
+                                return;
+                            }
+                        } catch (e) {
+                            console.warn('Erro ao ler configurações do localStorage:', e);
+                        }
+                    }
+                    
+                    reject(error);
+                });
+        } catch (error) {
+            console.error('Erro ao enviar mensagem:', error);
+            reject(error);
+        }
+    });
+}
 
-// Elementos da interface
-const maxConcurrent = document.getElementById('max-concurrent');
-const cacheTTL = document.getElementById('cache-ttl');
-const logLevel = document.getElementById('log-level');
-const includeAdult = document.getElementById('include-adult');
-const includeTor = document.getElementById('include-tor');
-const priorityCategories = document.querySelectorAll('input[name="priority-category"]');
-const maxVariations = document.getElementById('max-variations');
-const enableProxy = document.getElementById('enable-proxy');
-const proxyList = document.getElementById('proxy-list');
-const enableUseragent = document.getElementById('enable-useragent');
-const enableTor = document.getElementById('enable-tor');
-const torProxy = document.getElementById('tor-proxy');
-const testTor = document.getElementById('test-tor');
-const torStatus = document.getElementById('tor-status');
-const enableImageAnalysis = document.getElementById('enable-image-analysis');
-const imageApiProvider = document.getElementById('image-api-provider');
-const imageApiKey = document.getElementById('image-api-key');
-const imageApiEndpoint = document.getElementById('image-api-endpoint');
-const enableOsint = document.getElementById('enable-osint');
-const haveibeenpwnedKey = document.getElementById('haveibeenpwned-key');
-const testHaveibeenpwned = document.getElementById('test-haveibeenpwned');
-const dehashedKey = document.getElementById('dehashed-key');
-const testDehashed = document.getElementById('test-dehashed');
-const intelxKey = document.getElementById('intelx-key');
-const testIntelx = document.getElementById('test-intelx');
-const resetButton = document.getElementById('reset-button');
-const saveButton = document.getElementById('save-button');
-const successMessage = document.getElementById('success-message');
-const errorMessage = document.getElementById('error-message');
-
-// Inicialização
+// Inicialização da página de opções
 document.addEventListener('DOMContentLoaded', initialize);
 
 /**
- * Inicializa a página de configurações
+ * Inicializa a página de opções
  */
-async function initialize() {
-  console.log('Inicializando página de configurações...');
-  
-  // Configurar event listeners
-  saveButton.addEventListener('click', saveSettings);
-  resetButton.addEventListener('click', resetSettings);
-  testTor.addEventListener('click', testTorConnection);
-  testHaveibeenpwned.addEventListener('click', () => testApiKey('haveibeenpwned'));
-  testDehashed.addEventListener('click', () => testApiKey('dehashed'));
-  testIntelx.addEventListener('click', () => testApiKey('intelx'));
-  
-  // Carregar configurações salvas
-  await loadSettings();
-  
-  console.log('Página de configurações inicializada');
+function initialize() {
+    console.log('Inicializando página de configurações...');
+    
+    // Recuperar elementos da UI
+    const saveButton = document.getElementById('save-button');
+    const resetButton = document.getElementById('reset-button');
+    
+    // Configurar event listeners
+    if (saveButton) {
+        saveButton.addEventListener('click', saveSettings);
+    }
+    
+    if (resetButton) {
+        resetButton.addEventListener('click', resetSettings);
+    }
+    
+    // Carregar configurações existentes
+    loadSettings().catch(error => {
+        console.error('Erro ao carregar configurações:', error);
+        
+        // Usar configurações padrão
+        applyDefaultSettings();
+    });
+    
+    console.log('Página de configurações inicializada');
 }
 
 /**
- * Carrega configurações salvas
+ * Carrega as configurações do usuário
  */
 async function loadSettings() {
-  try {
-    // Obter configurações do background script
-    const response = await new Promise((resolve, reject) => {
-      browserAPI.runtime.sendMessage({
-        type: 'getSettings'
-      }, (response) => {
-        if (browserAPI.runtime.lastError) {
-          reject(new Error(browserAPI.runtime.lastError.message));
+    try {
+        const response = await sendMessageToBackground({ type: 'getSettings' });
+        
+        if (response && response.settings) {
+            applySettings(response.settings);
+            return response.settings;
         } else {
-          resolve(response);
+            throw new Error('Resposta inválida');
         }
-      });
-    });
-    
-    if (!response || !response.success) {
-      console.error('Erro ao carregar configurações:', response?.error || 'Resposta inválida');
-      showError('Erro ao carregar configurações: ' + (response?.error || 'Resposta inválida'));
-      return;
-    }
-    
-    const settings = response.settings;
-    
-    // Aplicar configurações à interface
-    maxConcurrent.value = settings.maxConcurrentRequests || 5;
-    cacheTTL.value = (settings.cacheTTL || 24 * 60 * 60 * 1000) / (60 * 60 * 1000); // Converter de ms para horas
-    logLevel.value = settings.logLevel || 'info';
-    includeAdult.checked = settings.includeAdult !== false;
-    includeTor.checked = settings.includeTor === true;
-    
-    if (settings.maxVariationsPerPlatform) {
-      maxVariations.value = settings.maxVariationsPerPlatform;
-    }
-    
-    if (settings.priorityCategories && Array.isArray(settings.priorityCategories)) {
-      priorityCategories.forEach(checkbox => {
-        checkbox.checked = settings.priorityCategories.includes(checkbox.value);
-      });
-    }
-    
-    // Configurações de proxy
-    enableProxy.checked = settings.proxyEnabled === true;
-    if (settings.proxyList && Array.isArray(settings.proxyList)) {
-      proxyList.value = settings.proxyList.map(proxy => {
-        if (proxy.username && proxy.password) {
-          return `${proxy.host}:${proxy.port}:${proxy.username}:${proxy.password}`;
+    } catch (error) {
+        console.error('Erro ao carregar configurações:', error);
+        
+        // Tentar via localStorage
+        try {
+            const settings = JSON.parse(localStorage.getItem('deepaliasSettings') || '{}');
+            if (Object.keys(settings).length > 0) {
+                console.log('Usando configurações do localStorage como fallback');
+                applySettings(settings);
+                return settings;
+            }
+        } catch (e) {
+            console.warn('Erro ao ler configurações do localStorage:', e);
         }
-        return `${proxy.host}:${proxy.port}`;
-      }).join('\n');
+        
+        throw error;
     }
-    
-    // Configurações de user-agent
-    enableUseragent.checked = settings.userAgentRotation !== false;
-    
-    // Configurações de Tor
-    enableTor.checked = settings.torEnabled === true;
-    if (settings.torProxyUrl) {
-      torProxy.value = settings.torProxyUrl;
-    }
-    
-    // Configurações de análise de imagem
-    enableImageAnalysis.checked = settings.imageAnalysisEnabled === true;
-    if (settings.imageApiProvider) {
-      imageApiProvider.value = settings.imageApiProvider;
-    }
-    if (settings.imageApiKey) {
-      imageApiKey.value = settings.imageApiKey;
-    }
-    if (settings.imageApiEndpoint) {
-      imageApiEndpoint.value = settings.imageApiEndpoint;
-    }
-    
-    // Configurações de OSINT
-    enableOsint.checked = settings.osintEnabled === true;
-    if (settings.osintApiKeys) {
-      if (settings.osintApiKeys.haveibeenpwned) {
-        haveibeenpwnedKey.value = settings.osintApiKeys.haveibeenpwned;
-      }
-      if (settings.osintApiKeys.dehashed) {
-        dehashedKey.value = settings.osintApiKeys.dehashed;
-      }
-      if (settings.osintApiKeys.intelx) {
-        intelxKey.value = settings.osintApiKeys.intelx;
-      }
-    }
-    
-    console.log('Configurações carregadas com sucesso');
-  } catch (error) {
-    console.error('Erro ao carregar configurações:', error);
-    showError('Erro ao carregar configurações: ' + (error.message || 'Erro desconhecido'));
-  }
 }
 
 /**
- * Salva as configurações
+ * Aplica as configurações aos elementos da UI
  */
-async function saveSettings() {
-  try {
-    // Coletar configurações da interface
-    const settings = {
-      // Configurações gerais
-      maxConcurrentRequests: parseInt(maxConcurrent.value, 10),
-      cacheTTL: parseInt(cacheTTL.value, 10) * 60 * 60 * 1000, // Converter horas para ms
-      logLevel: logLevel.value,
-      
-      // Configurações de busca
-      includeAdult: includeAdult.checked,
-      includeTor: includeTor.checked,
-      maxVariationsPerPlatform: parseInt(maxVariations.value, 10),
-      priorityCategories: Array.from(priorityCategories)
-        .filter(checkbox => checkbox.checked)
-        .map(checkbox => checkbox.value),
-      
-      // Configurações de proxy
-      proxyEnabled: enableProxy.checked,
-      proxyList: parseProxyList(proxyList.value),
-      
-      // Configurações de user-agent
-      userAgentRotation: enableUseragent.checked,
-      
-      // Configurações de Tor
-      torEnabled: enableTor.checked,
-      torProxyUrl: torProxy.value,
-      
-      // Configurações de análise de imagem
-      imageAnalysisEnabled: enableImageAnalysis.checked,
-      imageApiProvider: imageApiProvider.value,
-      imageApiKey: imageApiKey.value,
-      imageApiEndpoint: imageApiEndpoint.value,
-      
-      // Configurações de OSINT
-      osintEnabled: enableOsint.checked,
-      osintApiKeys: {
-        haveibeenpwned: haveibeenpwnedKey.value,
-        dehashed: dehashedKey.value,
-        intelx: intelxKey.value
-      }
+function applySettings(settings) {
+    // Implementar a lógica para aplicar as configurações aos elementos da UI
+    const maxResultsInput = document.getElementById('max-results');
+    if (maxResultsInput && settings.maxResults) {
+        maxResultsInput.value = settings.maxResults;
+    }
+    
+    const advancedSearchCheckbox = document.getElementById('advanced-search');
+    if (advancedSearchCheckbox && settings.advancedSearch !== undefined) {
+        advancedSearchCheckbox.checked = settings.advancedSearch;
+    }
+    
+    const searchAllCheckbox = document.getElementById('search-all');
+    if (searchAllCheckbox && settings.searchAll !== undefined) {
+        searchAllCheckbox.checked = settings.searchAll;
+    }
+    
+    // Outros campos...
+}
+
+/**
+ * Aplica configurações padrão
+ */
+function applyDefaultSettings() {
+    const defaultSettings = {
+        maxResults: 50,
+        timeout: 30000,
+        advancedSearch: false,
+        searchAll: true,
+        enableNotifications: true
     };
     
-    // Enviar configurações para o background script
-    const response = await new Promise((resolve, reject) => {
-      browserAPI.runtime.sendMessage({
-        type: 'saveSettings',
-        data: {
-          settings
-        }
-      }, (response) => {
-        if (browserAPI.runtime.lastError) {
-          reject(new Error(browserAPI.runtime.lastError.message));
-        } else {
-          resolve(response);
-        }
-      });
-    });
+    applySettings(defaultSettings);
     
-    if (!response || !response.success) {
-      throw new Error(response?.error || 'Erro desconhecido ao salvar configurações');
+    // Salvar no localStorage para uso futuro
+    try {
+        localStorage.setItem('deepaliasSettings', JSON.stringify(defaultSettings));
+    } catch (e) {
+        console.warn('Erro ao salvar configurações padrão no localStorage:', e);
     }
-    
-    console.log('Configurações salvas com sucesso');
-    showSuccess('Configurações salvas com sucesso!');
-  } catch (error) {
-    console.error('Erro ao salvar configurações:', error);
-    showError('Erro ao salvar configurações: ' + (error.message || 'Erro desconhecido'));
-  }
 }
 
 /**
- * Reseta as configurações para os valores padrão
+ * Salva as configurações atuais
+ */
+async function saveSettings() {
+    try {
+        // Coletar valores da UI
+        const settings = {
+            maxResults: parseInt(document.getElementById('max-results')?.value || '50', 10),
+            advancedSearch: document.getElementById('advanced-search')?.checked || false,
+            searchAll: document.getElementById('search-all')?.checked || true,
+            enableNotifications: document.getElementById('enable-notifications')?.checked || true,
+            lastSaved: new Date().toISOString()
+        };
+        
+        // Validar configurações
+        if (settings.maxResults < 1 || settings.maxResults > 100) {
+            showMessage('O número máximo de resultados deve estar entre 1 e 100', 'error');
+            return;
+        }
+        
+        // Salvar no localStorage primeiro como backup
+        try {
+            localStorage.setItem('deepaliasSettings', JSON.stringify(settings));
+        } catch (e) {
+            console.warn('Erro ao salvar configurações no localStorage:', e);
+        }
+        
+        // Enviar para o background
+        const response = await sendMessageToBackground({
+            type: 'saveSettings',
+            data: settings
+        });
+        
+        showMessage('Configurações salvas com sucesso!', 'success');
+        
+        return response;
+    } catch (error) {
+        console.error('Erro ao salvar configurações:', error);
+        showMessage('Erro ao salvar configurações: ' + error.message, 'error');
+        throw error;
+    }
+}
+
+/**
+ * Restaura as configurações padrão
  */
 function resetSettings() {
-  if (!confirm('Tem certeza que deseja restaurar todas as configurações para os valores padrão?')) {
-    return;
-  }
-  
-  // Configurações gerais
-  maxConcurrent.value = 5;
-  cacheTTL.value = 24;
-  logLevel.value = 'info';
-  
-  // Configurações de busca
-  includeAdult.checked = true;
-  includeTor.checked = false;
-  maxVariations.value = 3;
-  
-  // Resetar categorias prioritárias
-  priorityCategories.forEach(checkbox => {
-    checkbox.checked = ['adult', 'social', 'forum'].includes(checkbox.value);
-  });
-  
-  // Configurações de proxy
-  enableProxy.checked = false;
-  proxyList.value = '';
-  
-  // Configurações de user-agent
-  enableUseragent.checked = true;
-  
-  // Configurações de Tor
-  enableTor.checked = false;
-  torProxy.value = 'socks5://127.0.0.1:9050';
-  
-  // Configurações de análise de imagem
-  enableImageAnalysis.checked = false;
-  imageApiProvider.value = 'none';
-  imageApiKey.value = '';
-  imageApiEndpoint.value = '';
-  
-  // Configurações de OSINT
-  enableOsint.checked = false;
-  haveibeenpwnedKey.value = '';
-  dehashedKey.value = '';
-  intelxKey.value = '';
-  
-  showSuccess('Configurações restauradas para os valores padrão. Clique em Salvar para aplicar.');
+    if (confirm('Tem certeza que deseja restaurar as configurações padrão?')) {
+        applyDefaultSettings();
+        showMessage('Configurações padrão restauradas. Clique em Salvar para confirmar.', 'info');
+    }
 }
 
 /**
- * Testa a conexão Tor
+ * Exibe uma mensagem na UI
  */
-async function testTorConnection() {
-  try {
-    torStatus.textContent = 'Testando...';
-    torStatus.style.color = '';
+function showMessage(message, type = 'info') {
+    const messageContainer = document.getElementById('message-container');
+    if (!messageContainer) return;
     
-    // Enviar solicitação de teste para o background script
-    const response = await new Promise((resolve, reject) => {
-      browserAPI.runtime.sendMessage({
-        type: 'testTorConnection',
-        data: {
-          torProxyUrl: torProxy.value
-        }
-      }, (response) => {
-        if (browserAPI.runtime.lastError) {
-          reject(new Error(browserAPI.runtime.lastError.message));
-        } else {
-          resolve(response);
-        }
-      });
-    });
+    messageContainer.textContent = message;
+    messageContainer.className = `message ${type}`;
+    messageContainer.style.display = 'block';
     
-    if (!response || !response.success) {
-      throw new Error(response?.error || 'Falha no teste de conexão');
-    }
-    
-    if (response.status === 'connected') {
-      torStatus.textContent = 'Conectado ✓';
-      torStatus.style.color = 'green';
-    } else {
-      torStatus.textContent = 'Desconectado ✗';
-      torStatus.style.color = 'red';
-    }
-  } catch (error) {
-    console.error('Erro ao testar conexão Tor:', error);
-    torStatus.textContent = 'Erro: ' + (error.message || 'Erro desconhecido');
-    torStatus.style.color = 'red';
-  }
-}
-
-/**
- * Testa uma chave de API
- * @param {string} service - Nome do serviço
- */
-async function testApiKey(service) {
-  let apiKey = '';
-  let buttonElement = null;
-  
-  // Obter chave e botão correspondentes
-  switch (service) {
-    case 'haveibeenpwned':
-      apiKey = haveibeenpwnedKey.value;
-      buttonElement = testHaveibeenpwned;
-      break;
-    case 'dehashed':
-      apiKey = dehashedKey.value;
-      buttonElement = testDehashed;
-      break;
-    case 'intelx':
-      apiKey = intelxKey.value;
-      buttonElement = testIntelx;
-      break;
-    default:
-      console.error('Serviço desconhecido:', service);
-      return;
-  }
-  
-  if (!apiKey) {
-    alert('Por favor, insira uma chave de API para testar.');
-    return;
-  }
-  
-  try {
-    // Atualizar botão
-    const originalText = buttonElement.textContent;
-    buttonElement.textContent = 'Testando...';
-    buttonElement.disabled = true;
-    
-    // Enviar solicitação de teste para o background script
-    const response = await new Promise((resolve, reject) => {
-      browserAPI.runtime.sendMessage({
-        type: 'testApiKey',
-        data: {
-          service,
-          apiKey
-        }
-      }, (response) => {
-        if (browserAPI.runtime.lastError) {
-          reject(new Error(browserAPI.runtime.lastError.message));
-        } else {
-          resolve(response);
-        }
-      });
-    });
-    
-    // Restaurar botão
-    buttonElement.disabled = false;
-    
-    if (!response || !response.success) {
-      throw new Error(response?.error || 'Falha no teste da API');
-    }
-    
-    // Mostrar resultado
-    buttonElement.textContent = 'Válida ✓';
+    // Auto-esconder após 5 segundos
     setTimeout(() => {
-      buttonElement.textContent = originalText;
-    }, 3000);
-  } catch (error) {
-    console.error(`Erro ao testar API ${service}:`, error);
-    buttonElement.textContent = 'Inválida ✗';
-    setTimeout(() => {
-      buttonElement.textContent = 'Testar';
-      buttonElement.disabled = false;
-    }, 3000);
-  }
-}
-
-/**
- * Analisa a lista de proxies
- * @param {string} text - Texto com a lista de proxies
- * @returns {Array<object>} - Lista de objetos de proxy
- */
-function parseProxyList(text) {
-  if (!text) {
-    return [];
-  }
-  
-  const lines = text.split('\n').filter(line => line.trim());
-  const proxies = [];
-  
-  for (const line of lines) {
-    const parts = line.trim().split(':');
-    
-    if (parts.length >= 2) {
-      const proxy = {
-        host: parts[0],
-        port: parseInt(parts[1], 10)
-      };
-      
-      if (parts.length >= 4) {
-        proxy.username = parts[2];
-        proxy.password = parts[3];
-      }
-      
-      proxies.push(proxy);
-    }
-  }
-  
-  return proxies;
-}
-
-/**
- * Mostra mensagem de sucesso
- * @param {string} message - Mensagem de sucesso
- */
-function showSuccess(message) {
-  successMessage.textContent = message;
-  successMessage.style.display = 'block';
-  errorMessage.style.display = 'none';
-  
-  setTimeout(() => {
-    successMessage.style.display = 'none';
-  }, 3000);
-}
-
-/**
- * Mostra mensagem de erro
- * @param {string} message - Mensagem de erro
- */
-function showError(message) {
-  errorMessage.textContent = message;
-  errorMessage.style.display = 'block';
-  successMessage.style.display = 'none';
-  
-  setTimeout(() => {
-    errorMessage.style.display = 'none';
-  }, 5000);
+        messageContainer.style.display = 'none';
+    }, 5000);
 }

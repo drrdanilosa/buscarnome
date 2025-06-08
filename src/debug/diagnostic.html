@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepAlias Hunter Pro - Diagnóstico</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #4a6cf7;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: #4a6cf7;
+            margin-top: 0;
+        }
+        
+        .actions {
+            margin-top: 20px;
+        }
+        
+        button {
+            background-color: #4a6cf7;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background-color: #3a56c5;
+        }
+        
+        .output {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .success {
+            color: #28a745;
+        }
+        
+        .warning {
+            color: #ffc107;
+        }
+        
+        .error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>DeepAlias Hunter Pro - Diagnóstico</h1>
+    
+    <div class="card">
+        <h2>Diagnóstico de Plataformas</h2>
+        <p>Verificar o sistema de carregamento de plataformas e detectar possíveis problemas.</p>
+        
+        <div class="actions">
+            <button id="run-platform-diagnostic">Executar Diagnóstico</button>
+            <button id="clear-platform-cache">Limpar Cache de Plataformas</button>
+        </div>
+        
+        <div id="platform-output" class="output">Execute o diagnóstico para ver os resultados...</div>
+    </div>
+    
+    <div class="card">
+        <h2>Informações do Sistema</h2>
+        
+        <div class="actions">
+            <button id="show-system-info">Mostrar Informações</button>
+        </div>
+        
+        <div id="system-output" class="output">Clique para ver as informações do sistema...</div>
+    </div>
+    
+    <div class="card">
+        <h2>Ferramentas de Reparo</h2>
+        
+        <div class="actions">
+            <button id="create-default-files">Criar Arquivos Padrão</button>
+            <button id="reload-extension">Recarregar Extensão</button>
+        </div>
+        
+        <div id="repair-output" class="output">Selecione uma ação de reparo...</div>
+    </div>
+    
+    <script src="../services/platform_fallback.js"></script>
+    <script src="platform_diagnostic.js"></script>
+    <script>
+        // Manipuladores de eventos para os botões
+        document.getElementById('run-platform-diagnostic').addEventListener('click', async () => {
+            const output = document.getElementById('platform-output');
+            output.textContent = 'Executando diagnóstico de plataformas...\n';
+            
+            // Redirecionar console.log para o elemento de saída
+            const originalLog = console.log;
+            const originalWarn = console.warn;
+            const originalError = console.error;
+            
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                output.textContent += args.join(' ') + '\n';
+            };
+            
+            console.warn = function(...args) {
+                originalWarn.apply(console, args);
+                output.textContent += '⚠️ ' + args.join(' ') + '\n';
+                output.innerHTML = output.innerHTML.replace(/⚠️.*$/gm, match => `<span class="warning">${match}</span>`);
+            };
+            
+            console.error = function(...args) {
+                originalError.apply(console, args);
+                output.textContent += '❌ ' + args.join(' ') + '\n';
+                output.innerHTML = output.innerHTML.replace(/❌.*$/gm, match => `<span class="error">${match}</span>`);
+            };
+            
+            try {
+                await runPlatformDiagnostic();
+            } catch (error) {
+                console.error('Erro ao executar diagnóstico:', error);
+            } finally {
+                // Restaurar console original
+                console.log = originalLog;
+                console.warn = originalWarn;
+                console.error = originalError;
+                
+                // Colorir ✅
+                output.innerHTML = output.innerHTML.replace(/✅.*$/gm, match => `<span class="success">${match}</span>`);
+            }
+        });
+        
+        document.getElementById('clear-platform-cache').addEventListener('click', async () => {
+            const output = document.getElementById('platform-output');
+            output.textContent = 'Limpando cache de plataformas...\n';
+            
+            try {
+                await browser.storage.local.remove('platformsData');
+                output.textContent += '✅ Cache de plataformas limpo com sucesso\n';
+                output.innerHTML = output.innerHTML.replace(/✅.*$/gm, match => `<span class="success">${match}</span>`);
+            } catch (error) {
+                output.textContent += `❌ Erro ao limpar cache: ${error.message}\n`;
+                output.innerHTML = output.innerHTML.replace(/❌.*$/gm, match => `<span class="error">${match}</span>`);
+            }
+        });
+        
+        document.getElementById('show-system-info').addEventListener('click', async () => {
+            const output = document.getElementById('system-output');
+            output.textContent = 'Coletando informações do sistema...\n\n';
+            
+            try {
+                // Informações do navegador
+                const browserInfo = await browser.runtime.getBrowserInfo();
+                output.textContent += `Navegador: ${browserInfo.name} ${browserInfo.version}\n`;
+                
+                // Informações da extensão
+                const extensionInfo = await browser.management.getSelf();
+                output.textContent += `Extensão: ${extensionInfo.name} v${extensionInfo.version}\n`;
+                output.textContent += `ID: ${extensionInfo.id}\n`;
+                output.textContent += `Tipo de instalação: ${extensionInfo.installType}\n\n`;
+                
+                // Diretório raiz da extensão
+                output.textContent += `URL base: ${browser.runtime.getURL('')}\n\n`;
+                
+                // Status do PlatformService
+                const backgroundPage = browser.extension.getBackgroundPage();
+                if (backgroundPage && backgroundPage.platformService) {
+                    const platformService = backgroundPage.platformService;
+                    output.textContent += `PlatformService:\n`;
+                    output.textContent += `- Inicializado: ${platformService.isInitialized}\n`;
+                    output.textContent += `- Plataformas: ${platformService.platforms.length}\n`;
+                    output.textContent += `- Categorias: ${platformService.categories.size}\n`;
+                } else {
+                    output.textContent += `PlatformService: Não disponível\n`;
+                }
+                
+                // Permissões
+                const permissions = await browser.permissions.getAll();
+                output.textContent += `\nPermissões:\n- ${permissions.permissions.join('\n- ')}\n`;
+                output.textContent += `\nHost permissions:\n- ${permissions.origins.join('\n- ')}\n`;
+            } catch (error) {
+                output.textContent += `\n❌ Erro ao coletar informações: ${error.message}\n`;
+                output.innerHTML = output.innerHTML.replace(/❌.*$/gm, match => `<span class="error">${match}</span>`);
+            }
+        });
+        
+        document.getElementById('create-default-files').addEventListener('click', async () => {
+            const output = document.getElementById('repair-output');
+            output.textContent = 'Criando arquivos padrão...\n';
+            
+            try {
+                // Criar arquivo de fallback
+                const fallbackData = JSON.stringify(FALLBACK_PLATFORMS, null, 2);
+                
+                // Salvar no storage como um arquivo "virtual"
+                await browser.storage.local.set({
+                    'data_platforms_fallback.json': fallbackData,
+                    'lastRepairAttempt': new Date().toISOString()
+                });
+                
+                output.textContent += `✅ Arquivo de fallback criado e salvo no storage\n`;
+                output.textContent += `✅ Agora você pode recarregar a extensão\n`;
+                output.innerHTML = output.innerHTML.replace(/✅.*$/gm, match => `<span class="success">${match}</span>`);
+            } catch (error) {
+                output.textContent += `❌ Erro ao criar arquivos: ${error.message}\n`;
+                output.innerHTML = output.innerHTML.replace(/❌.*$/gm, match => `<span class="error">${match}</span>`);
+            }
+        });
+        
+        document.getElementById('reload-extension').addEventListener('click', async () => {
+            const output = document.getElementById('repair-output');
+            output.textContent = 'Recarregando extensão...\n';
+            
+            try {
+                // Esta é apenas uma simulação, extensões não podem recarregar a si mesmas no Firefox
+                output.textContent += `ℹ️ Para recarregar a extensão, vá para about:debugging, localize a extensão e clique em "Recarregar"\n`;
+            } catch (error) {
+                output.textContent += `❌ Erro: ${error.message}\n`;
+                output.innerHTML = output.innerHTML.replace(/❌.*$/gm, match => `<span class="error">${match}</span>`);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,26 +1,54 @@
 {
   "manifest_version": 2,
-  "name": "DeepAlias Hunter Pro (Enhanced)",
-  "version": "4.0.0",
-  "description": "Extensão OSINT aprimorada para busca multiplataforma de aliases, com foco em segurança e privacidade. Otimizada para Mozilla Firefox.",
+  "name": "DeepAlias Hunter Pro",
+  "version": "5.0.0",
+  "description": "Ferramenta avançada para busca de usernames em múltiplas plataformas sociais com análise de dados inteligente",
+  "author": "drrdanilosa",
+  "homepage_url": "https://github.com/drrdanilosa/deepalias-hunter-pro",
   
-  "applications": {
-    "gecko": {
-      "id": "deepalias-hunter-pro@enhanced.extension",
-      "strict_min_version": "78.0"
-    }
-  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "notifications",
+    "tabs",
+    "webRequest",
+    "webRequestBlocking",
+    "<all_urls>",
+    "*://*/*",
+    "https://www.google.com/s2/favicons*",
+    "https://favicon.yandex.net/*",
+    "https://github.com/*",
+    "https://linkedin.com/*",
+    "https://www.linkedin.com/*",
+    "https://twitter.com/*",
+    "https://x.com/*",
+    "https://instagram.com/*",
+    "https://facebook.com/*",
+    "https://youtube.com/*",
+    "https://tiktok.com/*",
+    "https://reddit.com/*",
+    "https://discord.com/*",
+    "https://telegram.org/*",
+    "https://whatsapp.com/*",
+    "https://snapchat.com/*",
+    "https://pinterest.com/*",
+    "https://tumblr.com/*",
+    "https://twitch.tv/*",
+    "https://steamcommunity.com/*",
+    "https://xbox.com/*",
+    "https://playstation.com/*",
+    "https://epicgames.com/*",
+    "https://origin.com/*"
+  ],
   
-  "icons": {
-    "16": "src/assets/icons/icon16.png",
-    "32": "src/assets/icons/icon32.png",
-    "48": "src/assets/icons/icon48.png",
-    "128": "src/assets/icons/icon128.png"
+  "background": {
+    "page": "src/background/background.html",
+    "persistent": true
   },
   
   "browser_action": {
     "default_popup": "src/popup/popup.html",
-    "default_title": "DeepAlias Hunter Pro",
+    "default_title": "DeepAlias Hunter Pro - Buscar Usernames",
     "default_icon": {
       "16": "src/assets/icons/icon16.png",
       "32": "src/assets/icons/icon32.png",
@@ -29,37 +57,58 @@
     }
   },
   
-  "background": {
-    "scripts": ["src/background/background_simple.js"],
-    "persistent": true
-  },
-  
   "options_ui": {
     "page": "src/options/options.html",
     "open_in_tab": true
   },
   
-  "content_security_policy": "script-src 'self'; object-src 'none';",
-  
-  "permissions": [
-    "storage",
-    "activeTab",
-    "alarms",
-    "notifications",
-    "webRequest",
-    "webRequestBlocking",
-    "<all_urls>"
-  ],
-  
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/content_scripts/content.js"],
-      "run_at": "document_idle",
+      "js": ["src/content/content.js"],
+      "run_at": "document_end",
       "all_frames": false
     }
   ],
   
-  "web_accessible_resources": ["src/assets/*"]
+  "commands": {
+    "open-data-view": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+D",
+        "mac": "Command+Shift+D"
+      },
+      "description": "Abrir visualização de dados"
+    },
+    "quick-search": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+F",
+        "mac": "Command+Shift+F"
+      },
+      "description": "Busca rápida com texto selecionado"
+    }
+  },
+  
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'; img-src 'self' data: https: *; connect-src 'self' https: *;",
+  
+  "web_accessible_resources": [
+    "src/assets/icons/*",
+    "src/assets/images/*",
+    "src/assets/css/*",
+    "src/data_view/*",
+    "src/options/*"
+  ],
+  
+  "icons": {
+    "16": "src/assets/icons/icon16.png",
+    "32": "src/assets/icons/icon32.png",
+    "48": "src/assets/icons/icon48.png",
+    "128": "src/assets/icons/icon128.png"
+  },
+  
+  "applications": {
+    "gecko": {
+      "id": "deepalias-hunter-pro@drrdanilosa",
+      "strict_min_version": "91.0"
+    }
+  }
 }
-
