@@ -65,7 +65,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/content/content.js"],
+      "js": ["src/content_scripts/content.js"],
       "run_at": "document_end",
       "all_frames": false
     }
@@ -88,7 +88,7 @@
     }
   },
   
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'; img-src 'self' data: https: *; connect-src 'self' https: *;",
+  "content_security_policy": "script-src 'self'; object-src 'self'; img-src 'self' data: https: *; connect-src 'self' https: *;",
   
   "web_accessible_resources": [
     "src/assets/icons/*",

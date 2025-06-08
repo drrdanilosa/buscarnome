@@ -955,7 +955,7 @@ function createResultElement(result) {
   element.innerHTML = `
     <div class="platform">
       <img src="${faviconUrl}" alt="${result.platform}" 
-           onerror="this.src='src/assets/icons/globe.png'"
+           class="platform-favicon"
            loading="lazy" />
       <span>${result.platform}</span>
     </div>
