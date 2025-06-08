@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-06-03T04:37:21.355Z",
+  "totalFiles": 5,
+  "totalViolations": 0,
+  "isCompliant": true,
+  "results": [
+    {
+      "file": "C:\\Users\\drdan\\CURSOS_TESTE\\CRIANDO\\SCRIPTS\\deep\\src\\debug\\debug_interno.html",
+      "violations": [],
+      "isClean": true
+    },
+    {
+      "file": "C:\\Users\\drdan\\CURSOS_TESTE\\CRIANDO\\SCRIPTS\\deep\\src\\help\\guia_diagnostico.html",
+      "violations": [],
+      "isClean": true
+    },
+    {
+      "file": "C:\\Users\\drdan\\CURSOS_TESTE\\CRIANDO\\SCRIPTS\\deep\\src\\popup\\popup.html",
+      "violations": [],
+      "isClean": true
+    },
+    {
+      "file": "C:\\Users\\drdan\\CURSOS_TESTE\\CRIANDO\\SCRIPTS\\deep\\src\\options\\options.html",
+      "violations": [],
+      "isClean": true
+    },
+    {
+      "file": "C:\\Users\\drdan\\CURSOS_TESTE\\CRIANDO\\SCRIPTS\\deep\\src\\about\\about.html",
+      "violations": [],
+      "isClean": true
+    }
+  ],
+  "summary": {
+    "cleanFiles": 5,
+    "filesWithViolations": 0,
+    "filesWithErrors": 0
+  }
+}

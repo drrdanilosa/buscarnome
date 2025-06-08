@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Comunicação Firefox - DeepAlias Hunter Pro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .log-container {
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Comunicação Firefox - DeepAlias Hunter Pro</h1>
+        
+        <div id="browser-info" class="test-result info">
+            <strong>Detectando ambiente do browser...</strong>
+        </div>
+        
+        <div class="controls">
+            <button onclick="testarComunicacaoBasica()">🔄 Testar Comunicação Básica</button>
+            <button onclick="testarGetSettings()">⚙️ Testar GetSettings</button>
+            <button onclick="testarSaveSettings()">💾 Testar SaveSettings</button>
+            <button onclick="testarMultiplasMensagens()">📤 Testar Múltiplas Mensagens</button>
+            <button onclick="verificarBackgroundScript()">🔍 Verificar Background Script</button>
+            <button onclick="limparLogs()">🗑️ Limpar Logs</button>
+        </div>
+        
+        <div id="results"></div>
+        
+        <div class="log-container" id="log-container">
+            <div id="logs">Logs aparecerão aqui...</div>
+        </div>
+    </div>
+
+    <script>
+        // Polyfill robusto para Firefox/Chrome
+        const browserAPI = (() => {
+            if (typeof browser !== 'undefined' && browser.runtime) {
+                return browser;
+            } else if (typeof chrome !== 'undefined' && chrome.runtime) {
+                return chrome;
+            }
+            return null;
+        })();
+
+        const isFirefox = typeof browser !== 'undefined' && browser.runtime;
+        const logsContainer = document.getElementById('logs');
+        const resultsContainer = document.getElementById('results');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.style.marginBottom = '5px';
+            logEntry.style.color = type === 'error' ? '#ff6b6b' : 
+                                 type === 'success' ? '#51cf66' : 
+                                 type === 'warning' ? '#ffd43b' : '#d4d4d4';
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+            console.log(`[Debug] ${message}`);
+        }
+
+        function addResult(title, success, details) {
+            const result = document.createElement('div');
+            result.className = `test-result ${success ? 'success' : 'error'}`;
+            result.innerHTML = `
+                <strong>${title}</strong><br>
+                ${details}
+            `;
+            resultsContainer.appendChild(result);
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            const browserInfo = document.getElementById('browser-info');
+            if (browserAPI) {
+                browserInfo.innerHTML = `
+                    <strong>✅ Browser API Detectada:</strong> ${isFirefox ? 'Firefox' : 'Chrome/Edge'}<br>
+                    <strong>Runtime ID:</strong> ${browserAPI.runtime.id || 'N/A'}<br>
+                    <strong>Versão do Manifest:</strong> ${browserAPI.runtime.getManifest().manifest_version}
+                `;
+                browserInfo.className = 'test-result success';
+                log(`Browser detectado: ${isFirefox ? 'Firefox' : 'Chrome/Edge'}`, 'success');
+            } else {
+                browserInfo.innerHTML = '<strong>❌ Nenhuma API de browser detectada!</strong>';
+                browserInfo.className = 'test-result error';
+                log('ERRO: Nenhuma API de browser detectada!', 'error');
+            }
+        });
+
+        // Função auxiliar para enviar mensagens com timeout
+        async function sendMessageWithTimeout(message, timeout = 5000) {
+            log(`Enviando mensagem: ${JSON.stringify(message)}`, 'info');
+            
+            if (!browserAPI || !browserAPI.runtime) {
+                throw new Error('API do browser não disponível');
+            }
+
+            if (isFirefox) {
+                return await Promise.race([
+                    browserAPI.runtime.sendMessage(message),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout Firefox')), timeout)
+                    )
+                ]);
+            } else {
+                return await new Promise((resolve, reject) => {
+                    const timeoutId = setTimeout(() => {
+                        reject(new Error('Timeout Chrome/Edge'));
+                    }, timeout);
+                    
+                    browserAPI.runtime.sendMessage(message, (response) => {
+                        clearTimeout(timeoutId);
+                        if (browserAPI.runtime.lastError) {
+                            reject(new Error(browserAPI.runtime.lastError.message));
+                        } else {
+                            resolve(response);
+                        }
+                    });
+                });
+            }
+        }
+
+        // Testes específicos
+        async function testarComunicacaoBasica() {
+            log('🔄 Iniciando teste de comunicação básica...', 'info');
+            
+            try {
+                const response = await sendMessageWithTimeout({
+                    type: 'ping',
+                    timestamp: Date.now()
+                });
+                
+                log(`Resposta recebida: ${JSON.stringify(response)}`, 'success');
+                addResult('Comunicação Básica', true, `Ping bem-sucedido: ${JSON.stringify(response)}`);
+            } catch (error) {
+                log(`ERRO na comunicação básica: ${error.message}`, 'error');
+                addResult('Comunicação Básica', false, `Erro: ${error.message}`);
+            }
+        }
+
+        async function testarGetSettings() {
+            log('⚙️ Testando getSettings...', 'info');
+            
+            try {
+                const response = await sendMessageWithTimeout({
+                    type: 'getSettings'
+                });
+                
+                log(`Settings recebidas: ${JSON.stringify(response)}`, 'success');
+                addResult('GetSettings', true, `Settings: ${JSON.stringify(response, null, 2)}`);
+            } catch (error) {
+                log(`ERRO ao obter settings: ${error.message}`, 'error');
+                addResult('GetSettings', false, `Erro: ${error.message}`);
+            }
+        }
+
+        async function testarSaveSettings() {
+            log('💾 Testando saveSettings...', 'info');
+            
+            const testSettings = {
+                includeAdult: false,
+                includeTor: true,
+                maxVariations: 5,
+                priorityCategories: ['social', 'gaming']
+            };
+            
+            try {
+                const response = await sendMessageWithTimeout({
+                    type: 'saveSettings',
+                    settings: testSettings
+                });
+                
+                log(`Settings salvas: ${JSON.stringify(response)}`, 'success');
+                addResult('SaveSettings', true, `Resultado: ${JSON.stringify(response)}`);
+            } catch (error) {
+                log(`ERRO ao salvar settings: ${error.message}`, 'error');
+                addResult('SaveSettings', false, `Erro: ${error.message}`);
+            }
+        }
+
+        async function testarMultiplasMensagens() {
+            log('📤 Testando múltiplas mensagens simultâneas...', 'info');
+            
+            const mensagens = [
+                { type: 'ping', id: 1 },
+                { type: 'getSettings', id: 2 },
+                { type: 'ping', id: 3 }
+            ];
+            
+            try {
+                const promises = mensagens.map(msg => sendMessageWithTimeout(msg));
+                const responses = await Promise.all(promises);
+                
+                log(`Todas as mensagens respondidas: ${JSON.stringify(responses)}`, 'success');
+                addResult('Múltiplas Mensagens', true, `${responses.length} mensagens processadas com sucesso`);
+            } catch (error) {
+                log(`ERRO em múltiplas mensagens: ${error.message}`, 'error');
+                addResult('Múltiplas Mensagens', false, `Erro: ${error.message}`);
+            }
+        }
+
+        async function verificarBackgroundScript() {
+            log('🔍 Verificando se background script está ativo...', 'info');
+            
+            try {
+                // Tentar múltiplos tipos de mensagem para verificar responsividade
+                const testes = [
+                    { type: 'health-check' },
+                    { type: 'status' },
+                    { type: 'debug-info' }
+                ];
+                
+                for (const teste of testes) {
+                    try {
+                        const response = await sendMessageWithTimeout(teste, 2000);
+                        log(`Teste ${teste.type}: ${JSON.stringify(response)}`, 'success');
+                        addResult(`Background Check (${teste.type})`, true, `Resposta: ${JSON.stringify(response)}`);
+                        return; // Se algum teste passar, o background está funcionando
+                    } catch (error) {
+                        log(`Teste ${teste.type} falhou: ${error.message}`, 'warning');
+                    }
+                }
+                
+                addResult('Background Script', false, 'Background script não está respondendo a nenhuma mensagem');
+            } catch (error) {
+                log(`ERRO na verificação do background: ${error.message}`, 'error');
+                addResult('Background Script', false, `Erro: ${error.message}`);
+            }
+        }
+
+        function limparLogs() {
+            logsContainer.innerHTML = 'Logs limpos...';
+            resultsContainer.innerHTML = '';
+            log('Logs limpos', 'info');
+        }
+    </script>
+</body>
+</html>

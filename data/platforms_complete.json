@@ -1,0 +1,122 @@
+[
+  {
+    "name": "GitHub",
+    "url_format": "https://github.com/{username}",
+    "check_uri": "https://github.com/{username}",
+    "category": "developer"
+  },
+  {
+    "name": "Twitter",
+    "url_format": "https://twitter.com/{username}",
+    "check_uri": "https://twitter.com/{username}",
+    "category": "social"
+  },
+  {
+    "name": "Instagram",
+    "url_format": "https://instagram.com/{username}",
+    "check_uri": "https://instagram.com/{username}",
+    "category": "social"
+  },
+  {
+    "name": "Facebook",
+    "url_format": "https://facebook.com/{username}",
+    "check_uri": "https://facebook.com/{username}",
+    "category": "social"
+  },
+  {
+    "name": "LinkedIn",
+    "url_format": "https://linkedin.com/in/{username}",
+    "check_uri": "https://linkedin.com/in/{username}",
+    "category": "professional"
+  },
+  {
+    "name": "Reddit",
+    "url_format": "https://reddit.com/user/{username}",
+    "check_uri": "https://reddit.com/user/{username}",
+    "category": "social"
+  },
+  {
+    "name": "YouTube",
+    "url_format": "https://youtube.com/@{username}",
+    "check_uri": "https://youtube.com/@{username}",
+    "category": "social"
+  },
+  {
+    "name": "Medium",
+    "url_format": "https://medium.com/@{username}",
+    "check_uri": "https://medium.com/@{username}",
+    "category": "blog"
+  },
+  {
+    "name": "Pinterest",
+    "url_format": "https://pinterest.com/{username}",
+    "check_uri": "https://pinterest.com/{username}",
+    "category": "social"
+  },
+  {
+    "name": "TikTok",
+    "url_format": "https://tiktok.com/@{username}",
+    "check_uri": "https://tiktok.com/@{username}",
+    "category": "social"
+  },
+  {
+    "name": "Twitch",
+    "url_format": "https://twitch.tv/{username}",
+    "check_uri": "https://twitch.tv/{username}",
+    "category": "gaming"
+  },
+  {
+    "name": "Behance",
+    "url_format": "https://behance.net/{username}",
+    "check_uri": "https://behance.net/{username}",
+    "category": "design"
+  },
+  {
+    "name": "Dribbble",
+    "url_format": "https://dribbble.com/{username}",
+    "check_uri": "https://dribbble.com/{username}",
+    "category": "design"
+  },
+  {
+    "name": "Flickr",
+    "url_format": "https://flickr.com/people/{username}",
+    "check_uri": "https://flickr.com/people/{username}",
+    "category": "photography"
+  },
+  {
+    "name": "SoundCloud",
+    "url_format": "https://soundcloud.com/{username}",
+    "check_uri": "https://soundcloud.com/{username}",
+    "category": "music"
+  },
+  {
+    "name": "Spotify",
+    "url_format": "https://open.spotify.com/user/{username}",
+    "check_uri": "https://open.spotify.com/user/{username}",
+    "category": "music"
+  },
+  {
+    "name": "Steam",
+    "url_format": "https://steamcommunity.com/id/{username}",
+    "check_uri": "https://steamcommunity.com/id/{username}",
+    "category": "gaming"
+  },
+  {
+    "name": "DeviantArt",
+    "url_format": "https://{username}.deviantart.com",
+    "check_uri": "https://{username}.deviantart.com",
+    "category": "art"
+  },
+  {
+    "name": "Quora",
+    "url_format": "https://quora.com/profile/{username}",
+    "check_uri": "https://quora.com/profile/{username}",
+    "category": "knowledge"
+  },
+  {
+    "name": "Telegram",
+    "url_format": "https://t.me/{username}",
+    "check_uri": "https://t.me/{username}",
+    "category": "messaging"
+  }
+]

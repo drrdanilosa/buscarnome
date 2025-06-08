@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Direto Firefox - DeepAlias</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+        button {
+            padding: 12px 24px;
+            margin: 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+        .log-container {
+            max-height: 500px;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-top: 20px;
+            border: 2px solid #444;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background-color: #28a745; }
+        .status-offline { background-color: #dc3545; }
+        .status-warning { background-color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Teste Avançado de Comunicação Firefox</h1>
+        
+        <div class="test-section">
+            <h2>📊 Status da Extensão</h2>
+            <div id="extension-status" class="test-result info">
+                <span class="status-indicator status-warning"></span>
+                <strong>Verificando extensão...</strong>
+            </div>
+            
+            <div id="browser-info" class="test-result info">
+                <strong>Detectando ambiente...</strong>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🧪 Testes de Comunicação</h2>
+            <div class="controls">
+                <button onclick="testarTudo()">🔄 Executar Todos os Testes</button>
+                <button onclick="testarPing()">📡 Teste Ping</button>
+                <button onclick="testarHealthCheck()">💓 Health Check</button>
+                <button onclick="testarGetSettings()">⚙️ GetSettings</button>
+                <button onclick="testarDebugInfo()">🔍 Debug Info</button>
+                <button onclick="testarCarga()">🚀 Teste de Carga</button>
+                <button onclick="limparResultados()">🗑️ Limpar</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📈 Resultados dos Testes</h2>
+            <div id="test-results"></div>
+        </div>
+        
+        <div class="log-container" id="log-container">
+            <div id="logs"><span style="color: #00ff00;">Sistema de logs inicializado...</span></div>
+        </div>
+    </div>
+
+    <script>
+        // Polyfill global
+        const browserAPI = (() => {
+            if (typeof browser !== 'undefined' && browser.runtime) {
+                return browser;
+            } else if (typeof chrome !== 'undefined' && chrome.runtime) {
+                return chrome;
+            }
+            return null;
+        })();
+
+        const isFirefox = typeof browser !== 'undefined';
+        const logsContainer = document.getElementById('logs');
+        const resultsContainer = document.getElementById('test-results');
+        let testCounter = 0;
+
+        // Sistema de logging avançado
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.style.marginBottom = '8px';
+            logEntry.style.padding = '5px';
+            logEntry.style.borderLeft = '3px solid';
+            
+            const colors = {
+                'error': { text: '#ff6b6b', border: '#ff1744' },
+                'success': { text: '#51cf66', border: '#00e676' },
+                'warning': { text: '#ffd43b', border: '#ffc107' },
+                'info': { text: '#74c0fc', border: '#2196f3' },
+                'debug': { text: '#a78bfa', border: '#7c4dff' }
+            };
+            
+            const color = colors[type] || colors.info;
+            logEntry.style.color = color.text;
+            logEntry.style.borderColor = color.border;
+            
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+            
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        // Adicionar resultado de teste
+        function addTestResult(title, success, details, duration) {
+            testCounter++;
+            const result = document.createElement('div');
+            result.className = `test-result ${success ? 'success' : 'error'}`;
+            result.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong>#${testCounter} ${title}</strong>
+                    <span style="font-size: 12px;">${duration}ms</span>
+                </div>
+                <div style="margin-top: 8px; font-size: 13px;">${details}</div>
+            `;
+            resultsContainer.appendChild(result);
+        }
+
+        // Função auxiliar para medir tempo
+        async function timeFunction(fn) {
+            const start = performance.now();
+            const result = await fn();
+            const duration = Math.round(performance.now() - start);
+            return { result, duration };
+        }
+
+        // Função principal de comunicação
+        async function sendMessage(message, timeout = 8000) {
+            log(`📤 Enviando: ${JSON.stringify(message)}`, 'info');
+            
+            if (!browserAPI || !browserAPI.runtime) {
+                throw new Error('API do browser não disponível');
+            }
+
+            if (isFirefox) {
+                return await Promise.race([
+                    browserAPI.runtime.sendMessage(message),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout (Firefox)')), timeout)
+                    )
+                ]);
+            } else {
+                return await new Promise((resolve, reject) => {
+                    const timeoutId = setTimeout(() => {
+                        reject(new Error('Timeout (Chrome/Edge)'));
+                    }, timeout);
+                    
+                    browserAPI.runtime.sendMessage(message, (response) => {
+                        clearTimeout(timeoutId);
+                        if (browserAPI.runtime.lastError) {
+                            reject(new Error(browserAPI.runtime.lastError.message));
+                        } else {
+                            resolve(response);
+                        }
+                    });
+                });
+            }
+        }
+
+        // Testes específicos
+        async function testarPing() {
+            log('🔄 Executando teste de ping...', 'info');
+            
+            try {
+                const { result, duration } = await timeFunction(() => 
+                    sendMessage({ type: 'ping', timestamp: Date.now() })
+                );
+                
+                log(`📥 Resposta: ${JSON.stringify(result)}`, 'success');
+                addTestResult('Ping', true, `PONG recebido: ${result.pong || 'N/A'}`, duration);
+            } catch (error) {
+                log(`❌ Ping falhou: ${error.message}`, 'error');
+                addTestResult('Ping', false, `Erro: ${error.message}`, 0);
+            }
+        }
+
+        async function testarHealthCheck() {
+            log('🔄 Executando health check...', 'info');
+            
+            try {
+                const { result, duration } = await timeFunction(() => 
+                    sendMessage({ type: 'health-check' })
+                );
+                
+                log(`📥 Health: ${JSON.stringify(result)}`, 'success');
+                const services = result.services || {};
+                const serviceList = Object.entries(services).map(([k, v]) => `${k}: ${v ? '✅' : '❌'}`).join(', ');
+                addTestResult('Health Check', true, `Status: ${result.status} | Serviços: ${serviceList}`, duration);
+            } catch (error) {
+                log(`❌ Health check falhou: ${error.message}`, 'error');
+                addTestResult('Health Check', false, `Erro: ${error.message}`, 0);
+            }
+        }
+
+        async function testarGetSettings() {
+            log('🔄 Executando teste de settings...', 'info');
+            
+            try {
+                const { result, duration } = await timeFunction(() => 
+                    sendMessage({ type: 'getSettings' })
+                );
+                
+                log(`📥 Settings: ${JSON.stringify(result)}`, 'success');
+                addTestResult('GetSettings', true, `Success: ${result.success} | Settings: ${Object.keys(result.settings || {}).length} itens`, duration);
+            } catch (error) {
+                log(`❌ GetSettings falhou: ${error.message}`, 'error');
+                addTestResult('GetSettings', false, `Erro: ${error.message}`, 0);
+            }
+        }
+
+        async function testarDebugInfo() {
+            log('🔄 Executando teste de debug info...', 'info');
+            
+            try {
+                const { result, duration } = await timeFunction(() => 
+                    sendMessage({ type: 'debug-info' })
+                );
+                
+                log(`📥 Debug: ${JSON.stringify(result)}`, 'success');
+                const debug = result.debug || {};
+                addTestResult('Debug Info', true, `Browser: ${debug.browser} | Services: ${debug.servicesInitialized ? '✅' : '❌'}`, duration);
+            } catch (error) {
+                log(`❌ Debug info falhou: ${error.message}`, 'error');
+                addTestResult('Debug Info', false, `Erro: ${error.message}`, 0);
+            }
+        }
+
+        async function testarCarga() {
+            log('🔄 Executando teste de carga (10 mensagens simultâneas)...', 'info');
+            
+            try {
+                const mensagens = Array.from({ length: 10 }, (_, i) => ({
+                    type: 'ping',
+                    id: i + 1,
+                    batch: 'load-test'
+                }));
+                
+                const start = performance.now();
+                const promises = mensagens.map(msg => sendMessage(msg));
+                const results = await Promise.all(promises);
+                const duration = Math.round(performance.now() - start);
+                
+                log(`📥 Teste de carga concluído: ${results.length} respostas`, 'success');
+                addTestResult('Teste de Carga', true, `${results.length}/10 mensagens processadas com sucesso`, duration);
+            } catch (error) {
+                log(`❌ Teste de carga falhou: ${error.message}`, 'error');
+                addTestResult('Teste de Carga', false, `Erro: ${error.message}`, 0);
+            }
+        }
+
+        async function testarTudo() {
+            log('🚀 Executando bateria completa de testes...', 'info');
+            limparResultados();
+            
+            await testarPing();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testarHealthCheck();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testarGetSettings();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testarDebugInfo();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testarCarga();
+            
+            log('✅ Bateria de testes concluída!', 'success');
+        }
+
+        function limparResultados() {
+            resultsContainer.innerHTML = '';
+            logsContainer.innerHTML = '<span style="color: #00ff00;">Logs limpos...</span>';
+            testCounter = 0;
+            log('🗑️ Resultados limpos', 'info');
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            const extensionStatus = document.getElementById('extension-status');
+            const browserInfo = document.getElementById('browser-info');
+            
+            if (browserAPI && browserAPI.runtime) {
+                try {
+                    const manifest = browserAPI.runtime.getManifest();
+                    const runtimeId = browserAPI.runtime.id;
+                    
+                    extensionStatus.innerHTML = `
+                        <span class="status-indicator status-online"></span>
+                        <strong>✅ Extensão Detectada</strong><br>
+                        <small>Runtime ID: ${runtimeId}</small>
+                    `;
+                    extensionStatus.className = 'test-result success';
+                    
+                    browserInfo.innerHTML = `
+                        <strong>🌐 Browser:</strong> ${isFirefox ? 'Firefox' : 'Chrome/Edge'}<br>
+                        <strong>📋 Manifest:</strong> v${manifest.manifest_version}<br>
+                        <strong>🔢 Versão:</strong> ${manifest.version}<br>
+                        <strong>📡 OnMessage:</strong> ${browserAPI.runtime.onMessage ? '✅' : '❌'}
+                    `;
+                    browserInfo.className = 'test-result success';
+                    
+                    log(`✅ Extensão encontrada: ${manifest.name} v${manifest.version}`, 'success');
+                } catch (error) {
+                    extensionStatus.innerHTML = `
+                        <span class="status-indicator status-warning"></span>
+                        <strong>⚠️ Extensão detectada mas com problemas</strong><br>
+                        <small>Erro: ${error.message}</small>
+                    `;
+                    extensionStatus.className = 'test-result warning';
+                    log(`⚠️ Problema na extensão: ${error.message}`, 'warning');
+                }
+            } else {
+                extensionStatus.innerHTML = `
+                    <span class="status-indicator status-offline"></span>
+                    <strong>❌ Extensão não detectada</strong><br>
+                    <small>A extensão não está carregada ou não foi encontrada</small>
+                `;
+                extensionStatus.className = 'test-result error';
+                log('❌ Extensão não encontrada!', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

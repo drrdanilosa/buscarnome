@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Comunicação - DeepAlias Hunter Pro</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .success {
+            border-color: #4CAF50;
+            background-color: #f8fff8;
+        }
+        .error {
+            border-color: #f44336;
+            background-color: #fff8f8;
+        }
+        .loading {
+            border-color: #2196F3;
+            background-color: #f8f9ff;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Teste de Comunicação - DeepAlias Hunter Pro</h1>
+        <p>Este teste verifica se a comunicação entre popup e background script está funcionando corretamente após as correções aplicadas.</p>
+        
+        <div id="browser-info" class="test-section">
+            <h3>🌐 Informações do Browser</h3>
+            <div class="status" id="browser-status">Detectando...</div>
+            <div class="result" id="browser-result"></div>
+        </div>
+        
+        <div id="ping-test" class="test-section">
+            <h3>📡 Teste de Ping</h3>
+            <button onclick="testPing()">Testar Ping</button>
+            <div class="status" id="ping-status"></div>
+            <div class="result" id="ping-result"></div>
+        </div>
+        
+        <div id="search-test" class="test-section">
+            <h3>🔍 Teste de Busca</h3>
+            <button onclick="testSearch()">Testar Busca</button>
+            <div class="status" id="search-status"></div>
+            <div class="result" id="search-result"></div>
+        </div>
+        
+        <div id="settings-test" class="test-section">
+            <h3>⚙️ Teste de Configurações</h3>
+            <button onclick="testSettings()">Testar Configurações</button>
+            <div class="status" id="settings-status"></div>
+            <div class="result" id="settings-result"></div>
+        </div>
+        
+        <div id="health-test" class="test-section">
+            <h3>💚 Teste de Saúde</h3>
+            <button onclick="testHealth()">Testar Health Check</button>
+            <div class="status" id="health-status"></div>
+            <div class="result" id="health-result"></div>
+        </div>
+        
+        <div id="complete-test" class="test-section">
+            <h3>🎯 Teste Completo</h3>
+            <button onclick="runCompleteTest()">Executar Todos os Testes</button>
+            <div class="status" id="complete-status"></div>
+            <div class="result" id="complete-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Detectar browser e configurar API
+        const isFirefox = typeof browser !== 'undefined';
+        const browserAPI = isFirefox ? browser : chrome;
+        
+        // Mostrar informações do browser
+        document.addEventListener('DOMContentLoaded', function() {
+            const browserInfo = {
+                type: isFirefox ? 'Firefox' : 'Chrome/Edge',
+                hasRuntime: !!(browserAPI && browserAPI.runtime),
+                runtimeId: browserAPI?.runtime?.id || 'N/A',
+                timestamp: new Date().toISOString()
+            };
+            
+            document.getElementById('browser-status').textContent = `Browser: ${browserInfo.type}`;
+            document.getElementById('browser-result').textContent = JSON.stringify(browserInfo, null, 2);
+            document.getElementById('browser-info').className = 'test-section ' + (browserInfo.hasRuntime ? 'success' : 'error');
+        });
+        
+        // Função auxiliar para enviar mensagens
+        async function sendMessageToBackground(message, timeout = 10000) {
+            return new Promise((resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                    reject(new Error(`Timeout excedido após ${timeout}ms`));
+                }, timeout);
+                
+                if (isFirefox) {
+                    browserAPI.runtime.sendMessage(message)
+                        .then(response => {
+                            clearTimeout(timeoutId);
+                            resolve(response);
+                        })
+                        .catch(error => {
+                            clearTimeout(timeoutId);
+                            reject(error);
+                        });
+                } else {
+                    browserAPI.runtime.sendMessage(message, (response) => {
+                        clearTimeout(timeoutId);
+                        if (browserAPI.runtime.lastError) {
+                            reject(new Error(browserAPI.runtime.lastError.message));
+                        } else {
+                            resolve(response);
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Teste de Ping
+        async function testPing() {
+            const section = document.getElementById('ping-test');
+            const status = document.getElementById('ping-status');
+            const result = document.getElementById('ping-result');
+            
+            section.className = 'test-section loading';
+            status.textContent = 'Enviando ping...';
+            result.textContent = '';
+            
+            try {
+                const startTime = Date.now();
+                const response = await sendMessageToBackground({ type: 'ping' });
+                const endTime = Date.now();
+                
+                const testResult = {
+                    success: true,
+                    response: response,
+                    latency: endTime - startTime,
+                    timestamp: new Date().toISOString()
+                };
+                
+                status.textContent = '✅ Ping bem-sucedido!';
+                result.textContent = JSON.stringify(testResult, null, 2);
+                section.className = 'test-section success';
+                
+            } catch (error) {
+                const testResult = {
+                    success: false,
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                };
+                
+                status.textContent = '❌ Ping falhou!';
+                result.textContent = JSON.stringify(testResult, null, 2);
+                section.className = 'test-section error';
+            }
+        }
+        
+        // Teste de Busca
+        async function testSearch() {
+            const section = document.getElementById('search-test');
+            const status = document.getElementById('search-status');
+            const result = document.getElementById('search-result');
+            
+            section.className = 'test-section loading';
+            status.textContent = 'Testando busca...';
+            result.textContent = '';
+            
+            try {
+                const searchMessage = {
+                    type: 'search',
+                    data: {
+                        username: 'testuser',
+                        options: {
+                            maxVariations: 3,
+                            includeTor: false,
+                            includeAdult: false
+                        }
+                    }
+                };
+                
+                const startTime = Date.now();
+                const response = await sendMessageToBackground(searchMessage, 15000);
+                const endTime = Date.now();
+                
+                const testResult = {
+                    success: true,
+                    response: response,
+                    latency: endTime - startTime,
+                    timestamp: new Date().toISOString()
+                };
+                
+                status.textContent = '✅ Busca bem-sucedida!';
+                result.textContent = JSON.stringify(testResult, null, 2);
+                section.className = 'test-section success';
+                
+            } catch (error) {
+                const testResult = {
+                    success: false,
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                };
+                
+                status.textContent = '❌ Busca falhou!';
+                result.textContent = JSON.stringify(testResult, null, 2);
+                section.className = 'test-section error';
+            }
+        }
+        
+        // Teste de Configurações
+        async function testSettings() {
+            const section = document.getElementById('settings-test');
+            const status = document.getElementById('settings-status');
+            const result = document.getElementById('settings-result');
+            
+            section.className = 'test-section loading';
+            status.textContent = 'Testando configurações...';
+            result.textContent = '';
+            
+            try {
+                const startTime = Date.now();
+                const response = await sendMessageToBackground({ type: 'getSettings' });
+                const endTime = Date.now();
+                
+                const testResult = {
+                    success: true,
+                    response: response,
+                    latency: endTime - startTime,
+                    timestamp: new Date().toISOString()
+                };
+                
+                status.textContent = '✅ Configurações carregadas!';
+                result.textContent = JSON.stringify(testResult, null, 2);
+                section.className = 'test-section success';
+                
+            } catch (error) {
+                const testResult = {
+                    success: false,
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                };
+                
+                status.textContent = '❌ Configurações falharam!';
+                result.textContent = JSON.stringify(testResult, null, 2);
+                section.className = 'test-section error';
+            }
+        }
+        
+        // Teste de Saúde
+        async function testHealth() {
+            const section = document.getElementById('health-test');
+            const status = document.getElementById('health-status');
+            const result = document.getElementById('health-result');
+            
+            section.className = 'test-section loading';
+            status.textContent = 'Verificando saúde dos serviços...';
+            result.textContent = '';
+            
+            try {
+                const startTime = Date.now();
+                const response = await sendMessageToBackground({ type: 'health-check' });
+                const endTime = Date.now();
+                
+                const testResult = {
+                    success: true,
+                    response: response,
+                    latency: endTime - startTime,
+                    timestamp: new Date().toISOString()
+                };
+                
+                status.textContent = '✅ Saúde verificada!';
+                result.textContent = JSON.stringify(testResult, null, 2);
+                section.className = 'test-section success';
+                
+            } catch (error) {
+                const testResult = {
+                    success: false,
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                };
+                
+                status.textContent = '❌ Verificação de saúde falhou!';
+                result.textContent = JSON.stringify(testResult, null, 2);
+                section.className = 'test-section error';
+            }
+        }
+        
+        // Teste Completo
+        async function runCompleteTest() {
+            const section = document.getElementById('complete-test');
+            const status = document.getElementById('complete-status');
+            const result = document.getElementById('complete-result');
+            
+            section.className = 'test-section loading';
+            status.textContent = 'Executando bateria completa de testes...';
+            result.textContent = 'Iniciando testes...\n';
+            
+            const results = {
+                browser: isFirefox ? 'Firefox' : 'Chrome/Edge',
+                startTime: new Date().toISOString(),
+                tests: {}
+            };
+            
+            try {
+                // Teste 1: Ping
+                result.textContent += '\n1. Testando ping...';
+                try {
+                    const pingResponse = await sendMessageToBackground({ type: 'ping' });
+                    results.tests.ping = { success: true, response: pingResponse };
+                    result.textContent += ' ✅';
+                } catch (error) {
+                    results.tests.ping = { success: false, error: error.message };
+                    result.textContent += ' ❌';
+                }
+                
+                // Teste 2: Health Check
+                result.textContent += '\n2. Testando health check...';
+                try {
+                    const healthResponse = await sendMessageToBackground({ type: 'health-check' });
+                    results.tests.health = { success: true, response: healthResponse };
+                    result.textContent += ' ✅';
+                } catch (error) {
+                    results.tests.health = { success: false, error: error.message };
+                    result.textContent += ' ❌';
+                }
+                
+                // Teste 3: Configurações
+                result.textContent += '\n3. Testando configurações...';
+                try {
+                    const settingsResponse = await sendMessageToBackground({ type: 'getSettings' });
+                    results.tests.settings = { success: true, response: settingsResponse };
+                    result.textContent += ' ✅';
+                } catch (error) {
+                    results.tests.settings = { success: false, error: error.message };
+                    result.textContent += ' ❌';
+                }
+                
+                // Teste 4: Busca
+                result.textContent += '\n4. Testando busca...';
+                try {
+                    const searchResponse = await sendMessageToBackground({
+                        type: 'search',
+                        data: {
+                            username: 'testuser',
+                            options: { maxVariations: 2 }
+                        }
+                    }, 15000);
+                    results.tests.search = { success: true, response: searchResponse };
+                    result.textContent += ' ✅';
+                } catch (error) {
+                    results.tests.search = { success: false, error: error.message };
+                    result.textContent += ' ❌';
+                }
+                
+                results.endTime = new Date().toISOString();
+                const successCount = Object.values(results.tests).filter(t => t.success).length;
+                const totalTests = Object.keys(results.tests).length;
+                
+                if (successCount === totalTests) {
+                    status.textContent = `🎉 TODOS OS ${totalTests} TESTES PASSARAM!`;
+                    section.className = 'test-section success';
+                } else {
+                    status.textContent = `⚠️ ${successCount}/${totalTests} testes passaram`;
+                    section.className = 'test-section error';
+                }
+                
+                result.textContent += '\n\n=== RESULTADOS FINAIS ===\n';
+                result.textContent += JSON.stringify(results, null, 2);
+                
+            } catch (error) {
+                results.error = error.message;
+                results.endTime = new Date().toISOString();
+                
+                status.textContent = '❌ Erro durante os testes!';
+                result.textContent += '\n\nERRO: ' + error.message;
+                result.textContent += '\n\n' + JSON.stringify(results, null, 2);
+                section.className = 'test-section error';
+            }
+        }
+    </script>
+</body>
+</html>

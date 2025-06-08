@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificação Final - DeepAlias Hunter Pro (Firefox)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .success {
+            border-left: 5px solid #2ecc71;
+        }
+        .warning {
+            border-left: 5px solid #f39c12;
+        }
+        .error {
+            border-left: 5px solid #e74c3c;
+        }
+        pre {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: Consolas, Monaco, 'Andale Mono', monospace;
+            color: #16a085;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .log {
+            height: 200px;
+            overflow-y: auto;
+            background: #f0f0f0;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+        }
+        .timestamp {
+            color: #7f8c8d;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Verificação Final - DeepAlias Hunter Pro (Firefox)</h1>
+    <p>Esta página verifica se todas as correções aplicadas para resolver o problema de timeout no Firefox estão funcionando corretamente.</p>
+    
+    <div class="card success">
+        <h2>✅ Status das Correções</h2>
+        <p>Todas as correções foram aplicadas com sucesso para resolver os seguintes problemas:</p>
+        <ul>
+            <li>Duplicação da função <code>handleMessage</code> corrigida</li>
+            <li>Timeout aumentado de 5 para 15 segundos</li>
+            <li>Manipuladores de mensagens implementados corretamente</li>
+            <li>Tratamento específico para Firefox implementado</li>
+            <li>Ferramenta de diagnóstico aprimorada</li>
+        </ul>
+    </div>
+    
+    <div class="card">
+        <h2>📋 Resumo das Mudanças</h2>
+        <ul>
+            <li><strong>background_simple.js</strong>: Correção do manipulador de mensagens e implementação dos serviços faltantes</li>
+            <li><strong>popup.js</strong>: Melhoria na comunicação com o background script e ajuste do timeout</li>
+        </ul>
+    </div>
+    
+    <div class="card">
+        <h2>🔍 Teste de Comunicação</h2>
+        <p>Clique no botão abaixo para testar a comunicação com o background script:</p>
+        <button id="test-ping">Testar Ping (5s)</button>
+        <button id="test-platforms">Verificar Plataformas (10s)</button>
+        <div id="test-results" class="log"></div>
+    </div>
+    
+    <div class="card">
+        <h2>🔧 Como Verificar Manualmente</h2>
+        <ol>
+            <li>Abra a extensão no Firefox</li>
+            <li>Clique no botão "🦊 Diagnóstico Firefox" no rodapé da extensão</li>
+            <li>Verifique se todos os serviços estão funcionando corretamente</li>
+            <li>Realize uma busca normal para verificar o funcionamento completo</li>
+        </ol>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const resultLog = document.getElementById('test-results');
+        const pingButton = document.getElementById('test-ping');
+        const platformsButton = document.getElementById('test-platforms');
+        
+        function log(message, type = 'info') {
+            const colors = {
+                success: '#2ecc71',
+                error: '#e74c3c',
+                warning: '#f39c12',
+                info: '#3498db'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.style.borderLeft = `3px solid ${colors[type]}`;
+            logEntry.style.padding = '5px';
+            logEntry.style.marginBottom = '5px';
+            
+            const timestamp = document.createElement('span');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = new Date().toLocaleTimeString() + ' - ';
+            
+            const content = document.createElement('span');
+            content.textContent = message;
+            
+            logEntry.appendChild(timestamp);
+            logEntry.appendChild(content);
+            resultLog.appendChild(logEntry);
+            resultLog.scrollTop = resultLog.scrollHeight;
+        }
+        
+        pingButton.addEventListener('click', async () => {
+            log('Testando comunicação com background script (timeout: 5s)...', 'info');
+            
+            try {
+                const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+                if (!browserAPI || !browserAPI.runtime) {
+                    throw new Error('API de navegador não disponível');
+                }
+                
+                const startTime = performance.now();
+                
+                // Testar comunicação com o background script
+                const response = await Promise.race([
+                    browserAPI.runtime.sendMessage({
+                        type: 'ping',
+                        ping: 'PING',
+                        timestamp: Date.now()
+                    }),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout na comunicação (5s)')), 5000)
+                    )
+                ]);
+                
+                const responseTime = Math.round(performance.now() - startTime);
+                
+                if (response && response.success) {
+                    log(`✅ Resposta recebida em ${responseTime}ms!`, 'success');
+                    log(`Browser: ${response.browser || 'Desconhecido'}`, 'info');
+                    log(`Versão: ${response.version || 'Desconhecida'}`, 'info');
+                    log(`Plataformas: ${response.platformCount || 0}`, 'info');
+                    log(`Serviços: ${response.servicesInitialized ? 'Inicializados' : 'Com problemas'}`, 'info');
+                } else {
+                    log(`⚠️ Resposta sem formato esperado: ${JSON.stringify(response)}`, 'warning');
+                }
+            } catch (error) {
+                log(`❌ Erro na comunicação: ${error.message}`, 'error');
+                log('Recomendação: Verifique se a extensão está instalada e ativa', 'warning');
+            }
+        });
+        
+        platformsButton.addEventListener('click', async () => {
+            log('Verificando plataformas disponíveis (timeout: 10s)...', 'info');
+            
+            try {
+                const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+                if (!browserAPI || !browserAPI.runtime) {
+                    throw new Error('API de navegador não disponível');
+                }
+                
+                const startTime = performance.now();
+                
+                // Testar acesso às plataformas
+                const response = await Promise.race([
+                    browserAPI.runtime.sendMessage({
+                        type: 'getPlatforms'
+                    }),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout na comunicação (10s)')), 10000)
+                    )
+                ]);
+                
+                const responseTime = Math.round(performance.now() - startTime);
+                
+                if (response && response.success && response.platforms) {
+                    const platformCount = response.platforms.length;
+                    log(`✅ ${platformCount} plataformas encontradas em ${responseTime}ms!`, 'success');
+                    
+                    // Mostrar categorias das plataformas
+                    const categories = [...new Set(response.platforms.map(p => p.category))];
+                    log(`📂 Categorias: ${categories.join(', ')}`, 'info');
+                    
+                    // Mostrar exemplos de plataformas
+                    const examples = response.platforms.slice(0, 5).map(p => p.name).join(', ');
+                    log(`📋 Exemplos: ${examples}`, 'info');
+                    
+                    // Verificar plataformas adultas
+                    const adultCount = response.platforms.filter(p => p.adult === true).length;
+                    log(`🔞 Plataformas adultas: ${adultCount}`, 'info');
+                } else {
+                    log(`⚠️ Resposta inválida: ${JSON.stringify(response)}`, 'warning');
+                }
+            } catch (error) {
+                log(`❌ Erro na comunicação: ${error.message}`, 'error');
+                log('Recomendação: Verifique se a extensão está instalada e ativa', 'warning');
+            }
+        });
+        
+        log('Página de verificação final carregada', 'info');
+        log('Clique nos botões acima para testar a comunicação com a extensão', 'info');
+    });
+    </script>
+</body>
+</html>
